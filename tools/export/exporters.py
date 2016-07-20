@@ -21,6 +21,16 @@ from tools.config import Config
 
 class OldLibrariesException(Exception): pass
 
+class FailedBuildException(Exception) : pass
+
+# Exporter descriptor for TARGETS
+# TARGETS as class attribute for backward compatibility (allows: if in Exporter.TARGETS)
+class ExporterTargetsProperty(object):
+    def __init__(self, func):
+        self.func = func
+    def __get__(self, inst, cls):
+        return self.func(cls)
+
 class Exporter(object):
     TEMPLATE_DIR = dirname(__file__)
     DOT_IN_RELATIVE_PATH = False
@@ -59,7 +69,7 @@ class Exporter(object):
 
         for r_type in ['headers', 's_sources', 'c_sources', 'cpp_sources',
             'objects', 'libraries', 'linker_script',
-            'lib_builds', 'lib_refs', 'repo_files', 'hex_files', 'bin_files']:
+            'lib_builds', 'lib_refs', 'hex_files', 'bin_files']:
             r = getattr(resources, r_type)
             if r:
                 self.toolchain.copy_files(r, trg_path, resources=resources)
@@ -107,14 +117,19 @@ class Exporter(object):
         }
         return project_data
 
-    def progen_gen_file(self, tool_name, project_data):
-        """" Generate project using ProGen Project API """
+    def progen_gen_file(self, tool_name, project_data, progen_build=False):
+        """ Generate project using ProGen Project API """
         settings = ProjectSettings()
         project = Project(self.program_name, [project_data], settings)
         # TODO: Fix this, the inc_dirs are not valid (our scripts copy files), therefore progen
         # thinks it is not dict but a file, and adds them to workspace.
         project.project['common']['include_paths'] = self.resources.inc_dirs
         project.generate(tool_name, copied=not self.sources_relative)
+        if progen_build:
+            print("Project exported, building...")
+            result = project.build(tool_name)
+            if result == -1:
+                raise FailedBuildException("Build Failed")
 
     def __scan_all(self, path):
         resources = []
@@ -134,16 +149,21 @@ class Exporter(object):
         # Copy only the file for the required target and toolchain
         lib_builds = []
         # Create the configuration object
+        if isinstance(prj_paths, basestring):
+            prj_paths = [prj_paths]
         config = Config(self.target, prj_paths)
         for src in ['lib', 'src']:
-            resources = reduce(add, [self.__scan_and_copy(join(path, src), trg_path) for path in prj_paths])
+            resources = self.__scan_and_copy(join(prj_paths[0], src), trg_path)
+            for path in prj_paths[1:]:
+                resources.add(self.__scan_and_copy(join(path, src), trg_path))
+
             lib_builds.extend(resources.lib_builds)
 
             # The repository files
-            for repo_dir in resources.repo_dirs:
-                repo_files = self.__scan_all(repo_dir)
-                for path in proj_paths :
-                    self.toolchain.copy_files(repo_files, trg_path, rel_path=join(path, src))
+            #for repo_dir in resources.repo_dirs:
+            #    repo_files = self.__scan_all(repo_dir)
+            #    for path in prj_paths:
+            #        self.toolchain.copy_files(repo_files, trg_path, rel_path=join(path, src))
 
         # The libraries builds
         for bld in lib_builds:
@@ -171,19 +191,14 @@ class Exporter(object):
         # Loads the resources into the config system which might expand/modify resources based on config data
         self.resources = config.load_resources(resources)
 
-
         if hasattr(self, "MBED_CONFIG_HEADER_SUPPORTED") and self.MBED_CONFIG_HEADER_SUPPORTED :
             # Add the configuration file to the target directory
             self.config_header = self.toolchain.MBED_CONFIG_FILE_NAME
             config.get_config_data_header(join(trg_path, self.config_header))
             self.config_macros = []
-        else :
+        else:
             # And add the configuration macros to the toolchain
             self.config_macros = config.get_config_data_macros()
-        # Check the existence of a binary build of the mbed library for the desired target
-        # This prevents exporting the mbed libraries from source
-        # if not self.toolchain.mbed_libs:
-        #    raise OldLibrariesException()
 
     def gen_file(self, template_file, data, target_file):
         template_path = join(Exporter.TEMPLATE_DIR, template_file)

@@ -17,9 +17,8 @@ limitations under the License.
 from os.path import basename, join, dirname
 from project_generator_definitions.definitions import ProGenDef
 
-from tools.export.exporters import Exporter
+from tools.export.exporters import Exporter, ExporterTargetsProperty
 from tools.targets import TARGET_MAP, TARGET_NAMES
-from tools.settings import ARM_INC
 
 # If you wish to add a new target, add it to project_generator_definitions, and then
 # define progen_target name in the target class (`` self.progen_target = 'my_target_name' ``)
@@ -36,21 +35,24 @@ class Uvision5(Exporter):
 
     MBED_CONFIG_HEADER_SUPPORTED = True
 
-    # backward compatibility with our scripts
-    TARGETS = []
-    for target in TARGET_NAMES:
-        try:
-            if (ProGenDef('uvision5').is_supported(str(TARGET_MAP[target])) or
-                ProGenDef('uvision5').is_supported(TARGET_MAP[target].progen['target'])):
-                TARGETS.append(target)
-        except AttributeError:
-            # target is not supported yet
-            continue
+    @ExporterTargetsProperty
+    def TARGETS(cls):
+        if not hasattr(cls, "_targets_supported"):
+            cls._targets_supported = []
+            for target in TARGET_NAMES:
+                try:
+                    if (ProGenDef('uvision5').is_supported(str(TARGET_MAP[target])) or
+                        ProGenDef('uvision5').is_supported(TARGET_MAP[target].progen['target'])):
+                        cls._targets_supported.append(target)
+                except AttributeError:
+                    # target is not supported yet
+                    continue
+        return cls._targets_supported
 
     def get_toolchain(self):
         return TARGET_MAP[self.target].default_toolchain
 
-    def generate(self):
+    def generate(self, progen_build=False):
         """ Generates the project files """
         project_data = self.progen_get_project_data()
         tool_specific = {}
@@ -74,8 +76,6 @@ class Uvision5(Exporter):
         project_data['tool_specific']['uvision5']['misc']['asm_flags'] = list(set(self.progen_flags['asm_flags']))
         # cxx flags included, as uvision have them all in one tab
         project_data['tool_specific']['uvision5']['misc']['c_flags'] = list(set(self.progen_flags['common_flags'] + self.progen_flags['c_flags'] + self.progen_flags['cxx_flags']))
-        # ARM_INC is by default as system inclusion, not required for exported project
-        project_data['tool_specific']['uvision5']['misc']['c_flags'].remove("-I \""+ARM_INC+"\"")
         # not compatible with c99 flag set in the template
         project_data['tool_specific']['uvision5']['misc']['c_flags'].remove("--c99")
         # cpp is not required as it's implicit for cpp files
@@ -95,4 +95,8 @@ class Uvision5(Exporter):
                 project_data['common']['macros'].pop(i)
             i += 1
         project_data['common']['macros'].append('__ASSERT_MSG')
-        self.progen_gen_file('uvision5', project_data)
+        project_data['common']['build_dir'] = project_data['common']['build_dir'] + '\\' + 'uvision5'
+        if progen_build:
+            self.progen_gen_file('uvision5', project_data, True)
+        else:
+            self.progen_gen_file('uvision5', project_data)

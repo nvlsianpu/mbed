@@ -34,6 +34,7 @@
 #include "mbed_error.h"
 
 #if   defined (__CC_ARM)
+#include <rt_misc.h>
 #pragma O3
 #define __USED __attribute__((used))
 #elif defined (__GNUC__)
@@ -185,6 +186,10 @@ osMessageQId osMessageQId_osTimerMessageQ;
 uint32_t       os_tmr = 0U;
 uint32_t const *m_tmr = NULL;
 uint16_t const mp_tmr_size = 0U;
+
+/* singleton mutex */
+osMutexId singleton_mutex_id;
+osMutexDef(singleton_mutex);
 
 #if defined (__CC_ARM) && !defined (__MICROLIB)
  /* A memory space for arm standard library. */
@@ -482,7 +487,7 @@ extern uint32_t __StackTop[];
 #elif defined(TARGET_NZ32_SC151)
 #define INITIAL_SP            (0x20008000UL)
 
-#elif (defined(TARGET_STM32F446RE) || defined(TARGET_STM32F446VE))
+#elif defined(TARGET_STM32F446RE) || defined(TARGET_STM32F446VE) || defined(TARGET_STM32F446ZE)
 #define INITIAL_SP            (0x20020000UL)
 
 #elif defined(TARGET_STM32F070RB) || defined(TARGET_STM32F030R8)
@@ -537,14 +542,20 @@ extern uint32_t          __end__[];
 #define HEAP_START      (__end__)
 #elif defined(__ICCARM__)
 #pragma section="HEAP"
-#define HEAP_START     (void *)__section_begin("HEAP")
+#define HEAP_END  (void *)__section_end("HEAP")
 #endif
 
 void set_main_stack(void) {
     uint32_t interrupt_stack_size = ((uint32_t)OS_MAINSTKSIZE * 4);
+#if defined(__ICCARM__)
+	/* For IAR heap is defined  .icf file */
+	uint32_t main_stack_size = ((uint32_t)INITIAL_SP - (uint32_t)HEAP_END) - interrupt_stack_size;
+#else
+	/* For ARM , uARM, or GCC_ARM , heap can grow and reach main stack */
     uint32_t heap_plus_stack_size = ((uint32_t)INITIAL_SP - (uint32_t)HEAP_START) - interrupt_stack_size;
     // Main thread's stack is 1/4 of the heap
-    uint32_t main_stack_size = heap_plus_stack_size / 4;
+    uint32_t main_stack_size = heap_plus_stack_size/4;
+#endif
     // The main thread must be 4 byte aligned
     uint32_t main_stack_start = ((uint32_t)INITIAL_SP - interrupt_stack_size - main_stack_size) & ~0x7;
 
@@ -581,6 +592,7 @@ void $Sub$$__cpp_initialize__aeabi_(void)
 
 void pre_main()
 {
+  singleton_mutex_id = osMutexCreate(osMutex(singleton_mutex));
   $Super$$__cpp_initialize__aeabi_();
   main();
 }
@@ -590,25 +602,13 @@ void pre_main()
 void * armcc_heap_base;
 void * armcc_heap_top;
 
-__asm void pre_main (void)
-{
-  IMPORT  __rt_lib_init
-  IMPORT  main
-  IMPORT  armcc_heap_base
-  IMPORT  armcc_heap_top
+int main(void);
 
-  LDR     R0,=armcc_heap_base
-  LDR     R1,=armcc_heap_top
-  LDR     R0,[R0]
-  LDR     R1,[R1]
-  /* Save link register (keep 8 byte alignment with dummy R4) */
-  PUSH    {R4, LR}
-  BL      __rt_lib_init
-  BL       main
-  /* Return to the thread destroy function.
-   */
-  POP     {R4, PC}
-  ALIGN
+void pre_main (void)
+{
+    singleton_mutex_id = osMutexCreate(osMutex(singleton_mutex));
+    __rt_lib_init((unsigned)armcc_heap_base, (unsigned)armcc_heap_top);
+    main();
 }
 
 /* The single memory model is checking for stack collision at run time, verifing
@@ -673,6 +673,7 @@ extern void __libc_init_array (void);
 extern int main(int argc, char **argv);
 
 void pre_main(void) {
+    singleton_mutex_id = osMutexCreate(osMutex(singleton_mutex));
     malloc_mutex_id = osMutexCreate(osMutex(malloc_mutex));
     env_mutex_id = osMutexCreate(osMutex(env_mutex));
     atexit(__libc_fini_array);
@@ -734,6 +735,7 @@ extern void exit(int arg);
 static uint8_t low_level_init_needed;
 
 void pre_main(void) {
+    singleton_mutex_id = osMutexCreate(osMutex(singleton_mutex));
     if (low_level_init_needed) {
         __iar_dynamic_initialization();
     }
