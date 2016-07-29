@@ -1,0 +1,12 @@
+;WITH SOFTDEVICE:
+
+LR_IROM1 0x1C000 0x0064000  {{
+  ER_IROM1 0x1C000 0x0064000  {{
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+  }}
+  RW_IRAM1 {0:#x} {1:#x}  {{
+   .ANY (+RW +ZI)
+  }}
+}}

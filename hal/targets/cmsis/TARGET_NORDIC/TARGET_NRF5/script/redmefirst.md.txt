@@ -1,0 +1,11 @@
+#Script for generating scatter files gen_ld.py for the memory provisioning feature.
+##Usage example:
+In order to generate scatter file for Keil use the pattern_nRF52832.sct file as pattern. As input data app_ram_base.h file is used. 1 Peripheral link and non of central links are requested. SoC have 0x20010000 as end of the RAM. Output scatter file will have name new_scatter_file.sct.
+```
+gen_ld.py -f app_ram_base.h -d new_scatter_file.sct -c 0 -p 1 -a 0x200 -s pattern_nRF52832.sct -r 0x20010000
+```
+##Scatter file patterns	
+Following patterns are supported & provided for now:
+Keil: pattern_nRF52832.sct
+GCC_ARM: pattern_nRF52832.ld
+IAR: pattern_nRF51822_QFAA
