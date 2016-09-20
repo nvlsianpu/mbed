@@ -84,24 +84,38 @@ static spi_info_t m_spi_info[SPI_COUNT];
 typedef struct {
     nrf_drv_spi_t  master;
     nrf_drv_spis_t slave;
+    IRQn_Type      IRQn;
+    uint32_t       vector;
 } sdk_driver_instances_t;
+
+
+void SPIS0_IRQ_HANDLER(void);
+void SPIS1_IRQ_HANDLER(void);
+void SPIS2_IRQ_HANDLER(void);
+
 static sdk_driver_instances_t m_instances[SPI_COUNT] = {
     #if SPI0_ENABLED
     {
         NRF_DRV_SPI_INSTANCE(0),
-        NRF_DRV_SPIS_INSTANCE(0)
+        NRF_DRV_SPIS_INSTANCE(0),
+        SPIS0_IRQ,
+        (uint32_t) SPIS0_IRQ_HANDLER
     },
     #endif
     #if SPI1_ENABLED
     {
         NRF_DRV_SPI_INSTANCE(1),
-        NRF_DRV_SPIS_INSTANCE(1)
+        NRF_DRV_SPIS_INSTANCE(1),
+        SPIS1_IRQ,
+        (uint32_t) SPIS1_IRQ_HANDLER
     },
     #endif
     #if SPI2_ENABLED
     {
         NRF_DRV_SPI_INSTANCE(2),
-        NRF_DRV_SPIS_INSTANCE(2)
+        NRF_DRV_SPIS_INSTANCE(2),
+        SPIS2_IRQ,
+        (uint32_t) SPIS2_IRQ_HANDLER
     },
     #endif
 };
@@ -223,6 +237,9 @@ static void prepare_slave_config(nrf_drv_spis_config_t *p_config,
     p_config->miso_drive   = NRF_DRV_SPIS_DEFAULT_MISO_DRIVE;
 }
 
+
+
+
 void spi_init(spi_t *obj,
               PinName mosi, PinName miso, PinName sclk, PinName ssel)
 {
@@ -230,6 +247,9 @@ void spi_init(spi_t *obj,
     for (i = 0; i < SPI_COUNT; ++i) {
         spi_info_t *p_spi_info = &m_spi_info[i];
         if (!p_spi_info->initialized) {
+            
+            NVIC_SetVector(m_instances[i].IRQn, m_instances[i].vector);
+            
             p_spi_info->sck_pin   = (uint8_t)sclk;
             p_spi_info->mosi_pin  = (mosi != NC) ?
                 (uint8_t)mosi : NRF_DRV_SPI_PIN_NOT_USED;
@@ -241,7 +261,7 @@ void spi_init(spi_t *obj,
             p_spi_info->frequency = NRF_DRV_SPI_FREQ_1M;
 
             // By default each SPI instance is initialized to work as a master.
-            // Should the slave mode be used, the instance will be reconfigured
+            // Should the slave mode be used, the instance will be reconfiguredk
             // appropriately in 'spi_format'.
             nrf_drv_spi_config_t config;
             prepare_master_config(&config, p_spi_info);

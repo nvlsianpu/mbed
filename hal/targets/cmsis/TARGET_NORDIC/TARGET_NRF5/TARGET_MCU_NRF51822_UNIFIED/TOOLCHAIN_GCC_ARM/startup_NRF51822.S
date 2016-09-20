@@ -97,8 +97,8 @@ __Vectors:
     .long 	GPIOTE_IRQHandler		 /*GPIOTE */
     .long 	ADC_IRQHandler		 /*ADC */
     .long 	TIMER0_IRQHandler		 /*TIMER0 */
-    .long 	TIMER1_IRQHandler		 /*TIMER1 */
-    .long 	TIMER2_IRQHandler		 /*TIMER2 */
+    .long 	TIMER1_IRQHandler_v	 /*TIMER1 */
+    .long 	TIMER2_IRQHandler_v		 /*TIMER2 */
     .long 	RTC0_IRQHandler		 /*RTC0 */
     .long 	TEMP_IRQHandler		 /*TEMP */
     .long 	RNG_IRQHandler		 /*RNG */
@@ -233,6 +233,11 @@ Default_Handler:
     .weak   \handler
     .set    \handler, Default_Handler
     .endm
+    
+    .macro IRQ_G generic_handler
+    .weak \generic_handler
+    .set \generic_handler, dispatch_IRQHandler
+    .endm
 
     IRQ  POWER_CLOCK_IRQHandler
     IRQ  RADIO_IRQHandler
@@ -242,8 +247,8 @@ Default_Handler:
     IRQ  GPIOTE_IRQHandler
     IRQ  ADC_IRQHandler
     IRQ  TIMER0_IRQHandler
-    IRQ  TIMER1_IRQHandler
-    IRQ  TIMER2_IRQHandler
+    IRQ_G  TIMER1_IRQHandler_v
+    IRQ_G  TIMER2_IRQHandler_v
     IRQ  RTC0_IRQHandler
     IRQ  TEMP_IRQHandler
     IRQ  RNG_IRQHandler

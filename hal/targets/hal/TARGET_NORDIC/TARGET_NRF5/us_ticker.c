@@ -76,12 +76,15 @@ void COMMON_RTC_IRQ_HANDLER(void)
     }
 }
 
+void RTC1_IRQHandler(void);
+
 void common_rtc_init(void)
 {
     if (m_common_rtc_enabled) {
         return;
     }
 
+    NVIC_SetVector(RTC1_IRQn, RTC1_IRQHandler);
     // RTC is driven by the low frequency (32.768 kHz) clock, a proper request
     // must be made to have it running.
     // Currently this clock is started in 'SystemInit' (see "system_nrf51.c"

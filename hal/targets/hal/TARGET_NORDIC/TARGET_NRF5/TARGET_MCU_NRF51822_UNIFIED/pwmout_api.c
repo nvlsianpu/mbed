@@ -95,11 +95,17 @@ static void pwm_reinit(pwm_t * pwm)
     }
 }
 
+void TIMER1_IRQHandler(void);
+void TIMER2_IRQHandler(void);
+
 void pwmout_init(pwmout_t *obj, PinName pin)
 {
     if (pin == NC) {
         error("PwmOut init failed. Invalid pin name.");
     }
+    
+    NVIC_SetVector(TIMER1_IRQn, TIMER1_IRQHandler);
+    NVIC_SetVector(TIMER2_IRQn, TIMER2_IRQHandler);
     
     // Check if pin is already initialized and find the next free channel.
     uint8_t free_instance = 0xFF;

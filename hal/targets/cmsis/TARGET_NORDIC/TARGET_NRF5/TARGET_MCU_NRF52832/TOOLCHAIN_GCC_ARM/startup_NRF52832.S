@@ -69,12 +69,12 @@ __Vectors:
   /* External Interrupts */
     .long   POWER_CLOCK_IRQHandler
     .long   RADIO_IRQHandler
-    .long   UARTE0_UART0_IRQHandler
-    .long   SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler
-    .long   SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler
+    .long   UARTE0_UART0_IRQHandler_v
+    .long   SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler_v
+    .long   SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler_v
     .long   NFCT_IRQHandler
     .long   GPIOTE_IRQHandler
-    .long   SAADC_IRQHandler
+    .long   SAADC_IRQHandler_v
     .long   TIMER0_IRQHandler
     .long   TIMER1_IRQHandler
     .long   TIMER2_IRQHandler
@@ -84,7 +84,7 @@ __Vectors:
     .long   ECB_IRQHandler
     .long   CCM_AAR_IRQHandler
     .long   WDT_IRQHandler
-    .long   RTC1_IRQHandler
+    .long   RTC1_IRQHandler_v
     .long   QDEC_IRQHandler
     .long   COMP_LPCOMP_IRQHandler
     .long   SWI0_EGU0_IRQHandler
@@ -95,14 +95,14 @@ __Vectors:
     .long   SWI5_EGU5_IRQHandler
     .long   TIMER3_IRQHandler
     .long   TIMER4_IRQHandler
-    .long   PWM0_IRQHandler
+    .long   PWM0_IRQHandler_v
     .long   PDM_IRQHandler
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
     .long   MWU_IRQHandler
-    .long   PWM1_IRQHandler
-    .long   PWM2_IRQHandler
-    .long   SPIM2_SPIS2_SPI2_IRQHandler
+    .long   PWM1_IRQHandler_v
+    .long   PWM2_IRQHandler_v
+    .long   SPIM2_SPIS2_SPI2_IRQHandler_v
     .long   RTC2_IRQHandler
     .long   I2S_IRQHandler
     .long   0                           /*Reserved */
@@ -426,15 +426,20 @@ Default_Handler:
     .weak   \handler
     .set    \handler, Default_Handler
     .endm
+    
+    .macro IRQ_G generic_handler
+    .weak \generic_handler
+    .set \generic_handler, dispatch_IRQHandler
+    .endm
 
-    IRQ  POWER_CLOCK_IRQHandler
-    IRQ  RADIO_IRQHandler
-    IRQ  UARTE0_UART0_IRQHandler
-    IRQ  SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler
-    IRQ  SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler
+    IRQ_G  POWER_CLOCK_IRQHandler
+    IRQ_G  RADIO_IRQHandler
+    IRQ_G  UARTE0_UART0_IRQHandler_v
+    IRQ_G  SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler_v
+    IRQ_G  SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler_v
     IRQ  NFCT_IRQHandler
     IRQ  GPIOTE_IRQHandler
-    IRQ  SAADC_IRQHandler
+    IRQ_G  SAADC_IRQHandler_v
     IRQ  TIMER0_IRQHandler
     IRQ  TIMER1_IRQHandler
     IRQ  TIMER2_IRQHandler
@@ -444,7 +449,7 @@ Default_Handler:
     IRQ  ECB_IRQHandler
     IRQ  CCM_AAR_IRQHandler
     IRQ  WDT_IRQHandler
-    IRQ  RTC1_IRQHandler
+    IRQ_G  RTC1_IRQHandler_v
     IRQ  QDEC_IRQHandler
     IRQ  COMP_LPCOMP_IRQHandler
     IRQ  SWI0_EGU0_IRQHandler
@@ -455,12 +460,12 @@ Default_Handler:
     IRQ  SWI5_EGU5_IRQHandler
     IRQ  TIMER3_IRQHandler
     IRQ  TIMER4_IRQHandler
-    IRQ  PWM0_IRQHandler
+    IRQ_G  PWM0_IRQHandler_v
     IRQ  PDM_IRQHandler
     IRQ  MWU_IRQHandler
-    IRQ  PWM1_IRQHandler
-    IRQ  PWM2_IRQHandler
-    IRQ  SPIM2_SPIS2_SPI2_IRQHandler
+    IRQ_G  PWM1_IRQHandler_v
+    IRQ_G  PWM2_IRQHandler_v
+    IRQ_G  SPIM2_SPIS2_SPI2_IRQHandler_v
     IRQ  RTC2_IRQHandler
     IRQ  I2S_IRQHandler
 

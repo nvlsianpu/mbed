@@ -106,10 +106,26 @@ typedef struct
     
     
 static void internal_pwmout_exe(pwmout_t *obj, bool new_period, bool initialization);
-    
+
+// extern PWM nIRQ handler implementations
+void PWM0_IRQHandler(void);
+void PWM1_IRQHandler(void);
+void PWM2_IRQHandler(void);
+ 
 void pwmout_init(pwmout_t *obj, PinName pin)
 {
     uint32_t i;
+
+    #if PWM0_ENABLED
+        NVIC_SetVector(PWM0_IRQn, PWM0_IRQHandler);
+    #endif
+    #if PWM1_ENABLED
+        NVIC_SetVector(PWM1_IRQn, PWM1_IRQHandler);
+    #endif
+    #if PWM2_ENABLED
+        NVIC_SetVector(PWM2_IRQn, PWM2_IRQHandler);
+    #endif
+    
     
     for (i = 0; PWM_INSTANCE_COUNT; i++)
     {
