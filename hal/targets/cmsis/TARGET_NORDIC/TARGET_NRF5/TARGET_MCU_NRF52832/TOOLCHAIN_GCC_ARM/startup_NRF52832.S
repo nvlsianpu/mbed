@@ -72,39 +72,39 @@ __Vectors:
     .long   UARTE0_UART0_IRQHandler_v
     .long   SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler_v
     .long   SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler_v
-    .long   NFCT_IRQHandler
-    .long   GPIOTE_IRQHandler
+    .long   NFCT_IRQHandler_v
+    .long   GPIOTE_IRQHandler_v
     .long   SAADC_IRQHandler_v
-    .long   TIMER0_IRQHandler
-    .long   TIMER1_IRQHandler
-    .long   TIMER2_IRQHandler
+    .long   TIMER0_IRQHandler_v
+    .long   TIMER1_IRQHandler_v
+    .long   TIMER2_IRQHandler_v
     .long   RTC0_IRQHandler
-    .long   TEMP_IRQHandler
+    .long   TEMP_IRQHandler_v
     .long   RNG_IRQHandler
     .long   ECB_IRQHandler
     .long   CCM_AAR_IRQHandler
-    .long   WDT_IRQHandler
+    .long   WDT_IRQHandler_v
     .long   RTC1_IRQHandler_v
-    .long   QDEC_IRQHandler
-    .long   COMP_LPCOMP_IRQHandler
-    .long   SWI0_EGU0_IRQHandler
+    .long   QDEC_IRQHandler_v
+    .long   COMP_LPCOMP_IRQHandler_v
+    .long   SWI0_EGU0_IRQHandler_v
     .long   SWI1_EGU1_IRQHandler
     .long   SWI2_EGU2_IRQHandler
-    .long   SWI3_EGU3_IRQHandler
+    .long   SWI3_EGU3_IRQHandler_v
     .long   SWI4_EGU4_IRQHandler
     .long   SWI5_EGU5_IRQHandler
-    .long   TIMER3_IRQHandler
-    .long   TIMER4_IRQHandler
+    .long   TIMER3_IRQHandler_v
+    .long   TIMER4_IRQHandler_v
     .long   PWM0_IRQHandler_v
-    .long   PDM_IRQHandler
+    .long   PDM_IRQHandler_v
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
     .long   MWU_IRQHandler
     .long   PWM1_IRQHandler_v
     .long   PWM2_IRQHandler_v
     .long   SPIM2_SPIS2_SPI2_IRQHandler_v
-    .long   RTC2_IRQHandler
-    .long   I2S_IRQHandler
+    .long   RTC2_IRQHandler_v
+    .long   I2S_IRQHandler_v
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
@@ -432,41 +432,41 @@ Default_Handler:
     .set \generic_handler, dispatch_IRQHandler
     .endm
 
-    IRQ_G  POWER_CLOCK_IRQHandler
-    IRQ_G  RADIO_IRQHandler
+    IRQ    POWER_CLOCK_IRQHandler                          /* restricted */
+    IRQ    RADIO_IRQHandler                                /* blocked    */
     IRQ_G  UARTE0_UART0_IRQHandler_v
     IRQ_G  SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler_v
     IRQ_G  SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler_v
-    IRQ  NFCT_IRQHandler
-    IRQ  GPIOTE_IRQHandler
+    IRQ_G  NFCT_IRQHandler_v
+    IRQ_G  GPIOTE_IRQHandler_v
     IRQ_G  SAADC_IRQHandler_v
-    IRQ  TIMER0_IRQHandler
-    IRQ  TIMER1_IRQHandler
-    IRQ  TIMER2_IRQHandler
-    IRQ  RTC0_IRQHandler
-    IRQ  TEMP_IRQHandler
-    IRQ  RNG_IRQHandler
-    IRQ  ECB_IRQHandler
-    IRQ  CCM_AAR_IRQHandler
-    IRQ  WDT_IRQHandler
+    IRQ_G  TIMER0_IRQHandler_v
+    IRQ_G  TIMER1_IRQHandler_v
+    IRQ_G  TIMER2_IRQHandler_v
+    IRQ    RTC0_IRQHandler                                 /* blocked    */
+    IRQ_G  TEMP_IRQHandler_v
+    IRQ    RNG_IRQHandler                                  /* restricted */
+    IRQ    ECB_IRQHandler                                  /* restricted */
+    IRQ    CCM_AAR_IRQHandler                              /* blocked    */
+    IRQ_G  WDT_IRQHandler_v
     IRQ_G  RTC1_IRQHandler_v
-    IRQ  QDEC_IRQHandler
-    IRQ  COMP_LPCOMP_IRQHandler
-    IRQ  SWI0_EGU0_IRQHandler
-    IRQ  SWI1_EGU1_IRQHandler
-    IRQ  SWI2_EGU2_IRQHandler
-    IRQ  SWI3_EGU3_IRQHandler
-    IRQ  SWI4_EGU4_IRQHandler
-    IRQ  SWI5_EGU5_IRQHandler
-    IRQ  TIMER3_IRQHandler
-    IRQ  TIMER4_IRQHandler
+    IRQ_G  QDEC_IRQHandler_v
+    IRQ_G  COMP_LPCOMP_IRQHandler_v
+    IRQ_G  SWI0_EGU0_IRQHandler_v
+    IRQ    SWI1_EGU1_IRQHandler                            /* restricted for Radio Notification */
+    IRQ    SWI2_EGU2_IRQHandler                            /* blocked for SoftDevice Event */
+    IRQ_G  SWI3_EGU3_IRQHandler_v
+    IRQ    SWI4_EGU4_IRQHandler                            /* blocked    */
+    IRQ    SWI5_EGU5_IRQHandler                            /* blocked    */
+    IRQ_G  TIMER3_IRQHandler_v
+    IRQ_G  TIMER4_IRQHandler_v
     IRQ_G  PWM0_IRQHandler_v
-    IRQ  PDM_IRQHandler
-    IRQ  MWU_IRQHandler
+    IRQ_G  PDM_IRQHandler_v
+    IRQ    MWU_IRQHandler                                  /* restricted */
     IRQ_G  PWM1_IRQHandler_v
     IRQ_G  PWM2_IRQHandler_v
     IRQ_G  SPIM2_SPIS2_SPI2_IRQHandler_v
-    IRQ  RTC2_IRQHandler
-    IRQ  I2S_IRQHandler
+    IRQ_G  RTC2_IRQHandler_v
+    IRQ_G  I2S_IRQHandler_v
 
   .end
