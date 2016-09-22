@@ -95,6 +95,8 @@ static void pwm_reinit(pwm_t * pwm)
     }
 }
 
+void GPIOTE_IRQHandler(void);// exported from nrf_drv_gpiote.c
+
 void TIMER1_IRQHandler(void);
 void TIMER2_IRQHandler(void);
 
@@ -103,6 +105,8 @@ void pwmout_init(pwmout_t *obj, PinName pin)
     if (pin == NC) {
         error("PwmOut init failed. Invalid pin name.");
     }
+    
+    NVIC_SetVector(GPIOTE_IRQn, GPIOTE_IRQHandler);
     
     NVIC_SetVector(TIMER1_IRQn, TIMER1_IRQHandler);
     NVIC_SetVector(TIMER2_IRQn, TIMER2_IRQHandler);
