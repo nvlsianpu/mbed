@@ -100,6 +100,24 @@ void GPIOTE_IRQHandler(void);// exported from nrf_drv_gpiote.c
 void TIMER1_IRQHandler(void);
 void TIMER2_IRQHandler(void);
 
+typedef struct
+{
+    IRQn_Type      IRQn;
+    uint32_t       vector;
+} pwm_hanlder_desc_t;
+
+static pwm_hanlder_desc_t pwm_handlers[] =
+{
+    {
+        TIMER1_IRQn,
+        TIMER1_IRQHandler
+    },
+    {
+        TIMER2_IRQn,
+        TIMER2_IRQHandler
+    }
+};
+
 void pwmout_init(pwmout_t *obj, PinName pin)
 {
     if (pin == NC) {
@@ -150,6 +168,10 @@ void pwmout_init(pwmout_t *obj, PinName pin)
     m_pwm[free_instance].pins[free_channel] = (uint32_t) pin;
     m_pwm[free_instance].duty_ticks[free_channel] = 0;
     if (!m_pwm[free_instance].channels_allocated) {
+        
+        NVIC_SetVector(GPIOTE_IRQn, GPIOTE_IRQHandler);
+        NVIC_SetVector(pwm_handlers[free_instance].IRQn, pwm_handlers[free_instance].vector);
+        
         m_pwm[free_instance].period_us = PWM_DEFAULT_PERIOD_US;
         for (uint8_t channel = 1; channel < PWM_CHANNELS_PER_INSTANCE; ++channel) {
             m_pwm[free_instance].pins[channel] = APP_PWM_NOPIN;

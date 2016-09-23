@@ -111,26 +111,40 @@ static void internal_pwmout_exe(pwmout_t *obj, bool new_period, bool initializat
 void PWM0_IRQHandler(void);
 void PWM1_IRQHandler(void);
 void PWM2_IRQHandler(void);
+
+typedef struct
+{
+    IRQn_Type      IRQn;
+    uint32_t       vector;
+} pwm_hanlder_desc_t;
+
+static pwm_hanlder_desc_t pwm_handlers[PWM_INSTANCE_COUNT] =
+{
+    {
+        PWM0_IRQn,
+        PWM0_IRQHandler
+    },
+    {
+        PWM1_IRQn,
+        PWM1_IRQHandler
+    },
+    {
+        PWM2_IRQn,
+        PWM2_IRQHandler
+    }
+};
  
 void pwmout_init(pwmout_t *obj, PinName pin)
 {
     uint32_t i;
-
-    #if PWM0_ENABLED
-        NVIC_SetVector(PWM0_IRQn, PWM0_IRQHandler);
-    #endif
-    #if PWM1_ENABLED
-        NVIC_SetVector(PWM1_IRQn, PWM1_IRQHandler);
-    #endif
-    #if PWM2_ENABLED
-        NVIC_SetVector(PWM2_IRQn, PWM2_IRQHandler);
-    #endif
     
     
     for (i = 0; PWM_INSTANCE_COUNT; i++)
     {
         if (m_pwm[i].p_pwm_driver == NULL) // a driver instance not assigned to the obj?
         {
+            NVIC_SetVector(pwm_handlers[i].IRQn, pwm_handlers[i].vector);
+            
             obj->pin         = pin;
             
             obj->pwm_channel = i;
