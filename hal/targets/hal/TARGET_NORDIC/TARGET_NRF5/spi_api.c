@@ -48,6 +48,7 @@
 #include "nrf_drv_spi.h"
 #include "nrf_drv_spis.h"
 #include "app_util_platform.h"
+//#include "irq_handlers_hw.h"
 
 #if DEVICE_SPI_ASYNCH
     #define SPI_IDX(obj)    ((obj)->spi.spi_idx)
@@ -88,34 +89,51 @@ typedef struct {
     uint32_t       vector;
 } sdk_driver_instances_t;
 
+#ifndef HARDWIRE_SPI_TWI_INTERRUPT
+void SPI0_TWI0_IRQHandler(void);
+void SPI1_TWI1_IRQHandler(void);
+void SPI2_TWI2_IRQHandler(void);
 
-void SPIS0_IRQ_HANDLER(void);
-void SPIS1_IRQ_HANDLER(void);
-void SPIS2_IRQ_HANDLER(void);
+static peripheral_hanlder_desc_t spi_hanlder_desc[SPI_COUNT] = {
+    #if SPI0_ENABLED
+    {
+        SPIS0_IRQ,
+        (uint32_t) SPI0_TWI0_IRQHandler
+    },
+    #endif
+    #if SPI1_ENABLED
+    {
+        SPIS1_IRQ,
+        (uint32_t) SPI1_TWI1_IRQHandler
+    },
+    #endif
+    #if SPI2_ENABLED
+    {
+        SPIS2_IRQ,
+        (uint32_t) SPI2_TWI2_IRQHandler
+    },
+    #endif    
+};
+#endif // HARDWIRE_SPI_TWI_INTERRUPT
+
 
 static sdk_driver_instances_t m_instances[SPI_COUNT] = {
     #if SPI0_ENABLED
     {
         NRF_DRV_SPI_INSTANCE(0),
-        NRF_DRV_SPIS_INSTANCE(0),
-        SPIS0_IRQ,
-        (uint32_t) SPIS0_IRQ_HANDLER
+        NRF_DRV_SPIS_INSTANCE(0)
     },
     #endif
     #if SPI1_ENABLED
     {
         NRF_DRV_SPI_INSTANCE(1),
-        NRF_DRV_SPIS_INSTANCE(1),
-        SPIS1_IRQ,
-        (uint32_t) SPIS1_IRQ_HANDLER
+        NRF_DRV_SPIS_INSTANCE(1)
     },
     #endif
     #if SPI2_ENABLED
     {
         NRF_DRV_SPI_INSTANCE(2),
-        NRF_DRV_SPIS_INSTANCE(2),
-        SPIS2_IRQ,
-        (uint32_t) SPIS2_IRQ_HANDLER
+        NRF_DRV_SPIS_INSTANCE(2)
     },
     #endif
 };
@@ -247,8 +265,10 @@ void spi_init(spi_t *obj,
     for (i = 0; i < SPI_COUNT; ++i) {
         spi_info_t *p_spi_info = &m_spi_info[i];
         if (!p_spi_info->initialized) {
-            
-            NVIC_SetVector(m_instances[i].IRQn, m_instances[i].vector);
+         
+#ifndef HARDWIRE_SPI_TWI_INTERRUPT         
+            NVIC_SetVector(spi_hanlder_desc[i].IRQn, spi_hanlder_desc[i].vector);
+#endif
             
             p_spi_info->sck_pin   = (uint8_t)sclk;
             p_spi_info->mosi_pin  = (mosi != NC) ?

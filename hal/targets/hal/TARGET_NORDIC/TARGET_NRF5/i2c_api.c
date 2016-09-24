@@ -107,16 +107,11 @@ static uint8_t twi_address(int i2c_address)
     return (i2c_address >> 1);
 }
 
+#ifndef HARDWIRE_SPI_TWI_INTERRUPT
 void SPI0_TWI0_IRQHandler(void);
 void SPI1_TWI1_IRQHandler(void);
 
-typedef struct
-{
-    IRQn_Type      IRQn;
-    uint32_t       vector;
-} twi_hanlder_desc_t;
-
-static twi_hanlder_desc_t twi_handlers[TWI_COUNT] =
+static peripheral_hanlder_desc_t twi_handlers[TWI_COUNT] =
 {
     #if TWI0_ENABLED
     {
@@ -131,6 +126,7 @@ static twi_hanlder_desc_t twi_handlers[TWI_COUNT] =
     }
     #endif 
 };
+#endif // HARDWIRE_SPI_TWI_INTERRUPT
 
 void i2c_init(i2c_t *obj, PinName sda, PinName scl)
 {
@@ -155,8 +151,10 @@ void i2c_init(i2c_t *obj, PinName sda, PinName scl)
 
     for (i = 0; i < TWI_COUNT; ++i) {
         if (!m_twi_info[i].initialized) {
-            
+         
+#ifndef HARDWIRE_SPI_TWI_INTERRUPT         
             NVIC_SetVector(twi_handlers[i].IRQn,twi_handlers[i].vector);
+#endif // HARDWIRE_SPI_TWI_INTERRUPT
             
             nrf_drv_twi_t const *twi = &m_twi_instances[i];
             ret_code_t ret_code =

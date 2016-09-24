@@ -246,8 +246,9 @@ void UART_IRQ_HANDLER(void)
 }
 
 void serial_init(serial_t *obj, PinName tx, PinName rx) {
-    
+#ifndef HARDWIRE_UART_INTERRUPT
     NVIC_SetVector(UART0_IRQn, UART0_IRQHandler);
+#endif
     
     UART_CB.pseltxd =
         (tx == NC) ? NRF_UART_PSEL_DISCONNECTED : (uint32_t)tx;
