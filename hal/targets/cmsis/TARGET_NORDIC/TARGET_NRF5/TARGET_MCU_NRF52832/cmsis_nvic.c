@@ -30,9 +30,6 @@
  */
 #include "cmsis_nvic.h"
 
-#define NVIC_RAM_VECTOR_ADDRESS   (0x10000000)  // Vectors positioned at start of SRAM2
-#define NVIC_FLASH_VECTOR_ADDRESS (0x0)  // Initial vector position in flash
-
 extern uint32_t nrf_dispatch_vector[NVIC_NUM_VECTORS];
 
 void NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)

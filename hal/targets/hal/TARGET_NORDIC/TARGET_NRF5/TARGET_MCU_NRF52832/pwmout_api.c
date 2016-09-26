@@ -107,43 +107,40 @@ typedef struct
     
 static void internal_pwmout_exe(pwmout_t *obj, bool new_period, bool initialization);
 
+#ifndef HARDWIRE_PWM_INTERRUPT
 // extern PWM nIRQ handler implementations
 void PWM0_IRQHandler(void);
 void PWM1_IRQHandler(void);
 void PWM2_IRQHandler(void);
 
-typedef struct
-{
-    IRQn_Type      IRQn;
-    uint32_t       vector;
-} pwm_hanlder_desc_t;
-
-static pwm_hanlder_desc_t pwm_handlers[PWM_INSTANCE_COUNT] =
+static peripheral_hanlder_desc_t pwm_handlers[PWM_INSTANCE_COUNT] =
 {
     {
         PWM0_IRQn,
-        PWM0_IRQHandler
+        (uint32_t)PWM0_IRQHandler
     },
     {
         PWM1_IRQn,
-        PWM1_IRQHandler
+        (uint32_t)PWM1_IRQHandler
     },
     {
         PWM2_IRQn,
-        PWM2_IRQHandler
+        (uint32_t)PWM2_IRQHandler
     }
 };
+#endif //  HARDWIRE_PWM_INTERRUPT
  
 void pwmout_init(pwmout_t *obj, PinName pin)
 {
     uint32_t i;
     
-    
     for (i = 0; PWM_INSTANCE_COUNT; i++)
     {
         if (m_pwm[i].p_pwm_driver == NULL) // a driver instance not assigned to the obj?
         {
+#ifndef HARDWIRE_PWM_INTERRUPT
             NVIC_SetVector(pwm_handlers[i].IRQn, pwm_handlers[i].vector);
+#endif
             
             obj->pin         = pin;
             

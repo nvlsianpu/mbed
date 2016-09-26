@@ -153,7 +153,7 @@ void i2c_init(i2c_t *obj, PinName sda, PinName scl)
         if (!m_twi_info[i].initialized) {
          
 #ifndef HARDWIRE_SPI_TWI_INTERRUPT         
-            NVIC_SetVector(twi_handlers[i].IRQn,twi_handlers[i].vector);
+            NVIC_SetVector(twi_handlers[i].IRQn, twi_handlers[i].vector);
 #endif // HARDWIRE_SPI_TWI_INTERRUPT
             
             nrf_drv_twi_t const *twi = &m_twi_instances[i];

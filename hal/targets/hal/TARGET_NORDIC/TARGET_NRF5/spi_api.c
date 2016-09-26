@@ -48,7 +48,6 @@
 #include "nrf_drv_spi.h"
 #include "nrf_drv_spis.h"
 #include "app_util_platform.h"
-//#include "irq_handlers_hw.h"
 
 #if DEVICE_SPI_ASYNCH
     #define SPI_IDX(obj)    ((obj)->spi.spi_idx)
@@ -85,8 +84,6 @@ static spi_info_t m_spi_info[SPI_COUNT];
 typedef struct {
     nrf_drv_spi_t  master;
     nrf_drv_spis_t slave;
-    IRQn_Type      IRQn;
-    uint32_t       vector;
 } sdk_driver_instances_t;
 
 #ifndef HARDWIRE_SPI_TWI_INTERRUPT
@@ -255,9 +252,6 @@ static void prepare_slave_config(nrf_drv_spis_config_t *p_config,
     p_config->miso_drive   = NRF_DRV_SPIS_DEFAULT_MISO_DRIVE;
 }
 
-
-
-
 void spi_init(spi_t *obj,
               PinName mosi, PinName miso, PinName sclk, PinName ssel)
 {
@@ -281,7 +275,7 @@ void spi_init(spi_t *obj,
             p_spi_info->frequency = NRF_DRV_SPI_FREQ_1M;
 
             // By default each SPI instance is initialized to work as a master.
-            // Should the slave mode be used, the instance will be reconfiguredk
+            // Should the slave mode be used, the instance will be reconfigured
             // appropriately in 'spi_format'.
             nrf_drv_spi_config_t config;
             prepare_master_config(&config, p_spi_info);

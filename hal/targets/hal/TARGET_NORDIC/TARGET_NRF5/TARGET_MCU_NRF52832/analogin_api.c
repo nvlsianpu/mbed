@@ -47,7 +47,7 @@ void analogin_init(analogin_t *obj, PinName pin)
     ret_code_t ret_code;
     
 #ifndef HARDWIRE_ADC_INTERRUPT
-    NVIC_SetVector(SAADC_IRQn, SAADC_IRQHandler);
+    NVIC_SetVector(SAADC_IRQn, (uint32_t)SAADC_IRQHandler);
 #endif
     
     ret_code = nrf_drv_saadc_init(&saadc_config, analog_in_event_handler);

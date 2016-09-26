@@ -103,15 +103,15 @@ void GPIOTE_IRQHandler(void);// exported from nrf_drv_gpiote.c
 void TIMER1_IRQHandler(void);
 void TIMER2_IRQHandler(void);
 
-static peripheral_hanlder_desc_t pwm_handlers[] =
+static peripheral_hanlder_desc_t timer_handlers[] =
 {
     {
         TIMER1_IRQn,
-        TIMER1_IRQHandler
+        (uint32_t)TIMER1_IRQHandler
     },
     {
         TIMER2_IRQn,
-        TIMER2_IRQHandler
+        (uint32_t)TIMER2_IRQHandler
     }
 };
 #endif
@@ -162,11 +162,11 @@ void pwmout_init(pwmout_t *obj, PinName pin)
     m_pwm[free_instance].duty_ticks[free_channel] = 0;
     if (!m_pwm[free_instance].channels_allocated) {
 #ifndef HARDWIRE_GPIOTE_INTERRUPT
-        NVIC_SetVector(GPIOTE_IRQn, GPIOTE_IRQHandler);
+        NVIC_SetVector(GPIOTE_IRQn, (uint32_t) GPIOTE_IRQHandler);
 #endif
 
 #ifndef HARDWIRE_TIMER_INTERRUPT
-        NVIC_SetVector(pwm_handlers[free_instance].IRQn, pwm_handlers[free_instance].vector);
+        NVIC_SetVector(timer_handlers[free_instance].IRQn, timer_handlers[free_instance].vector);
 #endif
         
         m_pwm[free_instance].period_us = PWM_DEFAULT_PERIOD_US;

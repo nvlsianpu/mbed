@@ -247,7 +247,7 @@ void UART_IRQ_HANDLER(void)
 
 void serial_init(serial_t *obj, PinName tx, PinName rx) {
 #ifndef HARDWIRE_UART_INTERRUPT
-    NVIC_SetVector(UART0_IRQn, UART0_IRQHandler);
+    NVIC_SetVector(UART0_IRQn, (uint32_t) UART0_IRQHandler);
 #endif
     
     UART_CB.pseltxd =

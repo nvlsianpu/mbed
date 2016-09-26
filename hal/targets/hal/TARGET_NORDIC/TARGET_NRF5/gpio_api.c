@@ -71,7 +71,7 @@ void gpio_init(gpio_t *obj, PinName pin)
     MBED_ASSERT((uint32_t)pin < GPIO_PIN_COUNT);
     
 #ifndef HARDWIRE_GPIOTE_INTERRUPT
-    NVIC_SetVector(GPIOTE_IRQn, GPIOTE_IRQHandler);
+    NVIC_SetVector(GPIOTE_IRQn, (uint32_t) GPIOTE_IRQHandler);
 #endif
     
     (void) nrf_drv_gpiote_init();
