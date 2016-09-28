@@ -39,22 +39,34 @@
 #include "nrf.h"
 #include "cmsis_nvic.h"
 #include "stdint.h"
+#include "nrf_sdm.h"
+#include "section_vars.h"
 
+
+__attribute__ ((section(".noinit")))
 uint32_t nrf_dispatch_vector[NVIC_NUM_VECTORS];
+
 
 typedef void (*generic_irq_handler_t)(void);
 
-/**
- * @brief Function for dispatch of IRQn handler.
- *
- * nRF5 port use SoftDevice as the base of binary image - because of
- * SoftDevice's specification simple vector relocation cannot be used.
- * Instead of that, the vector relocation feature is emulated by software.
- * IRQ Handlers are set in standard manner (by f. NVIC_SetVector).
- */
-void dispatch_IRQHandler(void)
+
+#ifdef NRF52
+#define VECTORS_FLASH_START 0x1C000
+#endif
+
+#ifdef NRF51
+#define VECTORS_FLASH_START 0x1B000
+#endif
+
+
+void nrf_reloc_vector_table(void)
 {
-    IPSR_Type ipsr_value;
-    ipsr_value.w = __get_IPSR();
-    ((generic_irq_handler_t)nrf_dispatch_vector[ipsr_value.b.ISR])();
+    // Copy and switch to dynamic vectors
+	uint32_t *old_vectors = (uint32_t*)VECTORS_FLASH_START;
+	uint32_t i;
+	for (i = 0; i< NVIC_NUM_VECTORS; i++) {
+		nrf_dispatch_vector[i] = old_vectors[i];
+	}
+
+	sd_softdevice_vector_table_base_set((uint32_t) nrf_dispatch_vector);
 }

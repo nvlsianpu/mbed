@@ -58,6 +58,7 @@ SECTIONS
 {
     .text :
     {
+        PROVIDE(__start_Vectors = .);
         KEEP(*(.Vectors))
         *(.text*)
 
@@ -142,6 +143,13 @@ SECTIONS
       PROVIDE(__stop_fs_data = .);
     } > RAM
 
+    .noinit :
+    {
+      PROVIDE(__start_noinit = .);
+      KEEP(*(.noinit))
+      PROVIDE(__stop_noinit = .);
+    } > RAM
+    
     .bss :
     {
         . = ALIGN(4);

@@ -89,7 +89,7 @@ typedef struct {
 #ifndef HARDWIRE_SPI_TWI_INTERRUPT
 void SPI0_TWI0_IRQHandler(void);
 void SPI1_TWI1_IRQHandler(void);
-void SPI2_TWI2_IRQHandler(void);
+void SPIM2_SPIS2_SPI2_IRQHandler(void);
 
 static peripheral_hanlder_desc_t spi_hanlder_desc[SPI_COUNT] = {
     #if SPI0_ENABLED
@@ -107,7 +107,7 @@ static peripheral_hanlder_desc_t spi_hanlder_desc[SPI_COUNT] = {
     #if SPI2_ENABLED
     {
         SPIS2_IRQ,
-        (uint32_t) SPI2_TWI2_IRQHandler
+        (uint32_t) SPIM2_SPIS2_SPI2_IRQHandler
     },
     #endif    
 };

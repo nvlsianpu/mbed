@@ -345,6 +345,8 @@ Reset_Handler:
 
     LDR     R0, =SystemInit
     BLX     R0
+    LDR     R0, =nrf_reloc_vector_table
+    BLX     R0
     LDR     R0, =_start
     BX      R0
 
@@ -426,47 +428,42 @@ Default_Handler:
     .weak   \handler
     .set    \handler, Default_Handler
     .endm
-    
-    .macro IRQ_G generic_handler
-    .weak \generic_handler
-    .set \generic_handler, dispatch_IRQHandler
-    .endm
 
-    IRQ    POWER_CLOCK_IRQHandler                          /* restricted */
-    IRQ    RADIO_IRQHandler                                /* blocked    */
-    IRQ_G  UARTE0_UART0_IRQHandler_v
-    IRQ_G  SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler_v
-    IRQ_G  SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler_v
-    IRQ_G  NFCT_IRQHandler_v
-    IRQ_G  GPIOTE_IRQHandler_v
-    IRQ_G  SAADC_IRQHandler_v
-    IRQ_G  TIMER0_IRQHandler_v
-    IRQ_G  TIMER1_IRQHandler_v
-    IRQ_G  TIMER2_IRQHandler_v
-    IRQ    RTC0_IRQHandler                                 /* blocked    */
-    IRQ_G  TEMP_IRQHandler_v
-    IRQ    RNG_IRQHandler                                  /* restricted */
-    IRQ    ECB_IRQHandler                                  /* restricted */
-    IRQ    CCM_AAR_IRQHandler                              /* blocked    */
-    IRQ_G  WDT_IRQHandler_v
-    IRQ_G  RTC1_IRQHandler_v
-    IRQ_G  QDEC_IRQHandler_v
-    IRQ_G  COMP_LPCOMP_IRQHandler_v
-    IRQ_G  SWI0_EGU0_IRQHandler_v
-    IRQ    SWI1_EGU1_IRQHandler                            /* restricted for Radio Notification */
-    IRQ    SWI2_EGU2_IRQHandler                            /* blocked for SoftDevice Event */
-    IRQ_G  SWI3_EGU3_IRQHandler_v
-    IRQ    SWI4_EGU4_IRQHandler                            /* blocked    */
-    IRQ    SWI5_EGU5_IRQHandler                            /* blocked    */
-    IRQ_G  TIMER3_IRQHandler_v
-    IRQ_G  TIMER4_IRQHandler_v
-    IRQ_G  PWM0_IRQHandler_v
-    IRQ_G  PDM_IRQHandler_v
-    IRQ    MWU_IRQHandler                                  /* restricted */
-    IRQ_G  PWM1_IRQHandler_v
-    IRQ_G  PWM2_IRQHandler_v
-    IRQ_G  SPIM2_SPIS2_SPI2_IRQHandler_v
-    IRQ_G  RTC2_IRQHandler_v
-    IRQ_G  I2S_IRQHandler_v
+    IRQ  POWER_CLOCK_IRQHandler                          /* restricted */
+    IRQ  RADIO_IRQHandler                                /* blocked    */
+    IRQ  UARTE0_UART0_IRQHandler_v
+    IRQ  SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQHandler_v
+    IRQ  SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQHandler_v
+    IRQ  NFCT_IRQHandler_v
+    IRQ  GPIOTE_IRQHandler_v
+    IRQ  SAADC_IRQHandler_v
+    IRQ  TIMER0_IRQHandler_v
+    IRQ  TIMER1_IRQHandler_v
+    IRQ  TIMER2_IRQHandler_v
+    IRQ  RTC0_IRQHandler                                 /* blocked    */
+    IRQ  TEMP_IRQHandler_v
+    IRQ  RNG_IRQHandler                                  /* restricted */
+    IRQ  ECB_IRQHandler                                  /* restricted */
+    IRQ  CCM_AAR_IRQHandler                              /* blocked    */
+    IRQ  WDT_IRQHandler_v
+    IRQ  RTC1_IRQHandler_v
+    IRQ  QDEC_IRQHandler_v
+    IRQ  COMP_LPCOMP_IRQHandler_v
+    IRQ  SWI0_EGU0_IRQHandler_v
+    IRQ  SWI1_EGU1_IRQHandler                            /* restricted for Radio Notification */
+    IRQ  SWI2_EGU2_IRQHandler                            /* blocked for SoftDevice Event */
+    IRQ  SWI3_EGU3_IRQHandler_v
+    IRQ  SWI4_EGU4_IRQHandler                            /* blocked    */
+    IRQ  SWI5_EGU5_IRQHandler                            /* blocked    */
+    IRQ  TIMER3_IRQHandler_v
+    IRQ  TIMER4_IRQHandler_v
+    IRQ  PWM0_IRQHandler_v
+    IRQ  PDM_IRQHandler_v
+    IRQ  MWU_IRQHandler                                  /* restricted */
+    IRQ  PWM1_IRQHandler_v
+    IRQ  PWM2_IRQHandler_v
+    IRQ  SPIM2_SPIS2_SPI2_IRQHandler_v
+    IRQ  RTC2_IRQHandler_v
+    IRQ  I2S_IRQHandler_v
 
   .end
