@@ -42,10 +42,12 @@
 #include "nrf_sdm.h"
 #include "section_vars.h"
 
-
+#if defined(__CC_ARM)
+__attribute__ ((section("noinit")))
+#elif defined(__CC_ARM)
 __attribute__ ((section(".noinit")))
+#endif
 uint32_t nrf_dispatch_vector[NVIC_NUM_VECTORS];
-
 
 typedef void (*generic_irq_handler_t)(void);
 
