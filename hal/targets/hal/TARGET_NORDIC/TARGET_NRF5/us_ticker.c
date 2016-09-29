@@ -77,6 +77,9 @@ void COMMON_RTC_IRQ_HANDLER(void)
 }
 
 #ifndef HARDWIRE_RTC_INTERRUPT
+#if (defined (__ICCARM__)) && defined(TARGET_MCU_NRF51822)//IAR
+__stackless __task 
+#endif
 void RTC1_IRQHandler(void);
 #endif
 
