@@ -1,4 +1,5 @@
-import os, shutil, json, pprint, sys, string
+#!python3
+import os, shutil, json, pprint, sys, string, json
 from collections import OrderedDict
 
 
@@ -45,7 +46,7 @@ def get_file_pathes_couples(path_sdk_componets, skip_dirs = [], skip_files = [])
                         cutted_path = os.path.join(cutted_root, file_name)
                         #full_path = root + "\\" + file_name
                         full_path = os.path.join(root, file_name)
-                        item = {"full_paty": full_path, "id": cutted_path, "cutted_root": cutted_root}
+                        item = {"full_path": full_path, "id": cutted_path, "cutted_root": cutted_root}
                         #mbed_list.append([full_path, cutted_path])
                         mbed_list.append(item)
 
@@ -70,18 +71,23 @@ def apply_replacement_id(mbed_list, replacemet_couples):
             
 
 
-id_replacements = {"old": "nrf_ble", "new": "ble"}
 
-force_copy_dirs_list = [{"sdk_dir":"device", "mbed_dir": "sdk\\device"},
-                        {"sdk_dir":"ble\\ble_dtm", "mbed_dir": "sdk\\ble\\ble_dtm"}]
-force_copy_files_list = [{"sdk_file":"sdk_validation.h", "mbed_dir": "sdk"}]
+                        
 
 
+with open('update_desc.json') as data_file:    
+    update_desc = json.load(data_file)
+
+print(update_desc)
+ignore_dirs_list = update_desc['ignore_dirs_list']
+id_replacements  = update_desc['id_replacements']
+force_copy_files_list = update_desc['force_copy_files_list']
+force_copy_dirs_list = update_desc['force_copy_dirs_list']
  
 #rename_sdk_old_dirs(os.getcwd(), False)
 list_sdk = get_file_pathes_couples("C:\\nRF5_SDK_12.1.0\\components\\",
-    ["ant", "nfc", "proprietary_rf", "serialization", "toolchain", "ble\\ble_services", "drivers_ext", "softdevice\\s212", "softdevice\\s332", "ble\\nrf_ble_qwr", "libraries\\bootloader"],
-    ["dox_config.h", "ble_error_log.c", "ble_conn_params.c"])
+    ignore_dirs_list,
+    ["dox_config.h", "ble_error_log.c", "ble_conn_params.c", "app_error_weak_cmock.c", "hci_slip.c", "hci_slip.h", "hci_transport.c", "hci_transport.h", "spi_5W_master.c", "spi_5W_master.h", "app_scheduler_serconn.c"])
 list_mbed1 = get_file_pathes_couples("C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\_old_sdk\\")
 list_mbed2 = get_file_pathes_couples("C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\TARGET_MCU_NRF52832\\_old_sdk\\")
 list_mbed3 = get_file_pathes_couples("C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\TARGET_MCU_NRF51822_UNIFIED\\_old_sdk\\")
@@ -98,27 +104,31 @@ for pathes_mbed in list_mbed:
     for pathes_sdk in list_sdk:
         if pathes_mbed["id"] == pathes_sdk["id"]:
             #print(pathes_mbed["id"])
-            #print(pathes_mbed["full_paty"]+" "+pathes_sdk["full_paty"] + "\r\n")
+            #print(pathes_mbed["full_path"]+" "+pathes_sdk["full_path"] + "\r\n")
             licz = licz + 1
             empty = False
             
     if empty:
-        print("!!!" + pathes_mbed["full_paty"] + "\r\n")
-    
+        print("!!!" + pathes_mbed["full_path"] + "\r\n")
+
+print("cmpatible files:")
 print(licz)
+
+print("old mbed files:")
 print(len(list_mbed))
+
+print("new sdk files:")
 print(len(list_sdk))
 
 #for pathes_sdk in list_sdk:
-
+licz = 0
 
 for pathes_sdk in list_sdk:
     empty = True
     for pathes_mbed in list_mbed:
         if pathes_mbed["id"] == pathes_sdk["id"]:
             #print(pathes_mbed["id"])
-            #print(pathes_mbed["full_paty"]+" "+pathes_sdk["full_paty"] + "\r\n")
-            licz = licz + 1
+            #print(pathes_mbed["full_path"]+" "+pathes_sdk["full_path"] + "\r\n")
             empty = False
             
     if empty:
@@ -126,7 +136,10 @@ for pathes_sdk in list_sdk:
         make_hard_copy = False
         
         for hard_copy_dir in force_copy_dirs_list:
-            if pathes_sdk["cutted_root"] == hard_copy_dir["sdk_dir"]:
+        
+            if 0 == string.find(pathes_sdk["cutted_root"], hard_copy_dir["sdk_dir"]):
+        
+            #if pathes_sdk["cutted_root"] == hard_copy_dir["sdk_dir"]:
                 make_hard_copy = True
                 print("**twarda_kopia_katalogu**")
                 break
@@ -139,5 +152,10 @@ for pathes_sdk in list_sdk:
                     print("**twarda_kopia_pliku**")
                     break
                 
-                
-        print("!!!" + pathes_sdk["full_paty"] + "\r\n")
+        if not make_hard_copy:
+            print("!!!" + pathes_sdk["full_path"] + "\r\n")
+        else:
+            licz = licz + 1
+        
+print("new files:")
+print(licz)
