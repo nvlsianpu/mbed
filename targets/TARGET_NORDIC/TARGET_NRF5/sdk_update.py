@@ -3,7 +3,6 @@ import os, shutil, json, pprint, sys, string, json
 from collections import OrderedDict
 
 
-
 def rename_sdk_old_dirs(path, dry_run = False):
     # I make assumption that all old sdk dirs have "sdk" names.
     sdk_dir_name = "sdk"
@@ -20,15 +19,18 @@ def rename_sdk_old_dirs(path, dry_run = False):
                     os.mkdir(full_path)
             
  
-def get_file_pathes_couples(path_sdk_componets, skip_dirs = [], skip_files = []):
+def get_file_pathes_couples(path_sdk_componets, skip_dirs = [], skip_files = [], verbose = False):
     mbed_list = []
+    cutted_roots = []
+    cutted_files = []
+    
     for root, dirs, files in os.walk(path_sdk_componets):
         procced = True
         cutted_root = root[len(path_sdk_componets):]
         
         for skip_d in skip_dirs:
             if 0 == string.find(cutted_root, skip_d):
-                print(cutted_root)
+                cutted_roots.append(cutted_root)
                 procced = False
          
         if procced:
@@ -37,7 +39,7 @@ def get_file_pathes_couples(path_sdk_componets, skip_dirs = [], skip_files = [])
                 procced = True
                 for skip_f in skip_files:
                     if (-1) != string.find(file_name, skip_f):
-                        print(file_name)
+                        cutted_files.append(file_name)
                         procced = False
                         
                 if procced:
@@ -50,10 +52,16 @@ def get_file_pathes_couples(path_sdk_componets, skip_dirs = [], skip_files = [])
                         #mbed_list.append([full_path, cutted_path])
                         mbed_list.append(item)
 
-    # for k in mbed_list:
-        # print(k);
-        
-    # print(len(mbed_list))
+    if verbose:                    
+        print("\r\nskipped directories:  {0:#d}".format(len(cutted_roots)))
+    
+        for xitem in cutted_roots:
+            print(xitem)
+
+        print("\r\nskipped files:  {0:#d}".format(len(cutted_files)))
+
+        for kitem in cutted_files:
+            print(kitem)
     
     return mbed_list
     
@@ -70,15 +78,114 @@ def apply_replacement_id(mbed_list, replacemet_couples):
     return mbed_list
             
 
+def get_copying_automatic_list(list_mbed, list_sdk, mbed_port_path = '', verbose = False):
+    copy_list = [] #list of copy items
+    orphan_list = []
 
+    licz = 0
+    for pathes_mbed in list_mbed:
+        empty = True
+        for pathes_sdk in list_sdk:
+            if pathes_mbed["id"] == pathes_sdk["id"]:
+                dest_path = pathes_mbed["full_path"]
 
+                dest_path = dest_path[ (len(mbed_port_path)):]
+            
+                item = {"id" : pathes_mbed["id"], "src_path": pathes_sdk["full_path"], "dest_path": dest_path, "old_path": pathes_mbed["full_path"]}
+                copy_list.append(item)
+                
+                empty = False;
+                
+                
+        if empty:
+            orphan_list.append(pathes_mbed["full_path"])
+    
+    print("\r\nfitted files: {0:#d}".format(len(copy_list)))
+    
+    if verbose:
+        for item in copy_list:
+            str_verbose = "{0} --> {1}"
+            print(str_verbose.format(item["id"], item["dest_path"]))
+    
+    
+    print("\r\norphaned files:  {0:#d}".format(len(orphan_list)))
+
+    if verbose:
+        for xitem in orphan_list:
+            print(xitem)
+            
+    return copy_list
+    
+def is_in_copying_list(copy_list, file_id):
+    for pathes_copy in copy_list:
+        if pathes_copy["id"] == file_id:
+
+            return False
+            
+    return True
+
+    
+def upgrade_copying_list(copy_list, pathes_sdk, dest_mbed_dir_path, print_list):
+    splited = os.path.split(pathes_sdk["id"])
+    dest_path = os.path.join(dest_mbed_dir_path, splited[1])
+    item = {"id" : pathes_sdk["id"], "src_path": pathes_sdk["full_path"], "dest_path": dest_path} #, "old_path": pathes_mbed["full_path"]}
+    copy_list.append(item)    
+    print_list.append(item)
+    
+    
+    
+    
+def upgrade_copying_list_by_dirs(copy_list, list_sdk, force_copy_dirs_list, verbose = False):
+    print_list = []
+    
+    for pathes_sdk in list_sdk:
+        if is_in_copying_list(copy_list, pathes_sdk["id"]):
+            
+            make_hard_copy = False
+            
+            for hard_copy_dir in force_copy_dirs_list:
+            
+                if 0 == string.find(pathes_sdk["cutted_root"], hard_copy_dir["sdk_dir"]):
+            
+                    make_hard_copy = True
+                    upgrade_copying_list(copy_list, pathes_sdk, hard_copy_dir["mbed_dir"], print_list)
+                    break
+                    
+                
+    print("\r\nforced copy of files by directories: {0:#d}".format(len(print_list)))
+    
+    if verbose:
+        for item in print_list:
+            str_verbose = "{0} --> {1}"
+            print(str_verbose.format(item["id"], item["dest_path"]))
                         
-
+def upgrade_copying_list_by_files(copy_list, list_sdk, force_copy_files_list, verbose = False):
+    print_list = []
+    
+    for pathes_sdk in list_sdk:
+        if is_in_copying_list(copy_list, pathes_sdk["id"]):
+            
+            make_hard_copy = False
+            
+            for hard_copy_file in force_copy_files_list:
+                if pathes_sdk["id"] == hard_copy_file["sdk_file"]:
+                    make_hard_copy = True
+                    upgrade_copying_list(copy_list, pathes_sdk, hard_copy_file["mbed_dir"], print_list)
+                    break
+                
+    print("\r\nforced copy of files by files: {0:#d}".format(len(print_list)))
+    
+    if verbose:
+        for item in print_list:
+            str_verbose = "{0} --> {1}"
+            print(str_verbose.format(item["id"], item["dest_path"]))            
+                        
 
 with open('update_desc.json') as data_file:    
     update_desc = json.load(data_file)
 
-print(update_desc)
+#print(update_desc)
+ignore_file_list = update_desc['ignore_file_list']
 ignore_dirs_list = update_desc['ignore_dirs_list']
 id_replacements  = update_desc['id_replacements']
 force_copy_files_list = update_desc['force_copy_files_list']
@@ -86,76 +193,24 @@ force_copy_dirs_list = update_desc['force_copy_dirs_list']
  
 #rename_sdk_old_dirs(os.getcwd(), False)
 list_sdk = get_file_pathes_couples("C:\\nRF5_SDK_12.1.0\\components\\",
-    ignore_dirs_list,
-    ["dox_config.h", "ble_error_log.c", "ble_conn_params.c", "app_error_weak_cmock.c", "hci_slip.c", "hci_slip.h", "hci_transport.c", "hci_transport.h", "spi_5W_master.c", "spi_5W_master.h", "app_scheduler_serconn.c"])
-list_mbed1 = get_file_pathes_couples("C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\_old_sdk\\")
-list_mbed2 = get_file_pathes_couples("C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\TARGET_MCU_NRF52832\\_old_sdk\\")
-list_mbed3 = get_file_pathes_couples("C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\TARGET_MCU_NRF51822_UNIFIED\\_old_sdk\\")
+                                   ignore_dirs_list,
+                                   ignore_file_list,
+                                   verbose = True)
+                                   
+list_mbed1 = get_file_pathes_couples("_old_sdk\\")
+list_mbed2 = get_file_pathes_couples("TARGET_MCU_NRF52832\\_old_sdk\\")
+list_mbed3 = get_file_pathes_couples("TARGET_MCU_NRF51822_UNIFIED\\_old_sdk\\")
 
 list_mbed = list_mbed1 + list_mbed2 + list_mbed3
 
 list_mbed = apply_replacement_id(list_mbed, id_replacements)
 
-print("\r\n")
+mbed_port_path = ''#"C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\"
 
-licz = 0
-for pathes_mbed in list_mbed:
-    empty = True
-    for pathes_sdk in list_sdk:
-        if pathes_mbed["id"] == pathes_sdk["id"]:
-            #print(pathes_mbed["id"])
-            #print(pathes_mbed["full_path"]+" "+pathes_sdk["full_path"] + "\r\n")
-            licz = licz + 1
-            empty = False
-            
-    if empty:
-        print("!!!" + pathes_mbed["full_path"] + "\r\n")
+copy_list = get_copying_automatic_list(list_mbed, list_sdk, mbed_port_path, verbose = True)
+        
+upgrade_copying_list_by_dirs(copy_list, list_sdk, force_copy_dirs_list, verbose = True)
+upgrade_copying_list_by_files(copy_list, list_sdk, force_copy_files_list, verbose = True)
+        
+get_mbed_sdk_dirs_lsit(path = ".")
 
-print("cmpatible files:")
-print(licz)
-
-print("old mbed files:")
-print(len(list_mbed))
-
-print("new sdk files:")
-print(len(list_sdk))
-
-#for pathes_sdk in list_sdk:
-licz = 0
-
-for pathes_sdk in list_sdk:
-    empty = True
-    for pathes_mbed in list_mbed:
-        if pathes_mbed["id"] == pathes_sdk["id"]:
-            #print(pathes_mbed["id"])
-            #print(pathes_mbed["full_path"]+" "+pathes_sdk["full_path"] + "\r\n")
-            empty = False
-            
-    if empty:
-        
-        make_hard_copy = False
-        
-        for hard_copy_dir in force_copy_dirs_list:
-        
-            if 0 == string.find(pathes_sdk["cutted_root"], hard_copy_dir["sdk_dir"]):
-        
-            #if pathes_sdk["cutted_root"] == hard_copy_dir["sdk_dir"]:
-                make_hard_copy = True
-                print("**twarda_kopia_katalogu**")
-                break
-        
-        if not make_hard_copy:
-            for hard_copy_file in force_copy_files_list:
-                #print(pathes_sdk["id"])
-                if pathes_sdk["id"] == hard_copy_file["sdk_file"]:
-                    make_hard_copy = True
-                    print("**twarda_kopia_pliku**")
-                    break
-                
-        if not make_hard_copy:
-            print("!!!" + pathes_sdk["full_path"] + "\r\n")
-        else:
-            licz = licz + 1
-        
-print("new files:")
-print(licz)

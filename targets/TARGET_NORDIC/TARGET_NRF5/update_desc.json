@@ -33,6 +33,20 @@
                       "drivers_nrf\\twi_master\\deprecated"
                     ],
                     
+    "ignore_file_list": [
+                            "dox_config.h",
+                            "ble_error_log.c",
+                            "ble_conn_params.c",
+                            "app_error_weak_cmock.c",
+                            "hci_slip.c",
+                            "hci_slip.h",
+                            "hci_transport.c",
+                            "hci_transport.h",
+                            "spi_5W_master.c",
+                            "spi_5W_master.h",
+                            "app_scheduler_serconn.c"
+                        ],
+                    
     "force_copy_files_list" : [{"sdk_file": "sdk_validation.h", "mbed_dir": "sdk"},
                          {"sdk_file": "drivers_nrf\\hal\\nrf_comp.h", "mbed_dir": "TARGET_MCU_NRF52832\\drivers_nrf\\hal"},
                          {"sdk_file": "drivers_nrf\\hal\\nrf_egu.h", "mbed_dir": "TARGET_MCU_NRF52832\\drivers_nrf\\hal"},
@@ -66,5 +80,4 @@
                         {"sdk_dir": "libraries\\bootloader",     "mbed_dir": "sdk\\libraries\\bootloader"},
                         {"sdk_dir": "libraries\\svc",            "mbed_dir": "sdk\\libraries\\svc"}
                        ]
-                        
 }
