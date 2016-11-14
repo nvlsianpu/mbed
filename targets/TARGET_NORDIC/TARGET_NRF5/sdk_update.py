@@ -1,7 +1,7 @@
 #!python3
-import os, shutil, json, pprint, sys, string, json
+import os, shutil, json, pprint, sys, string, json, argparse
 from collections import OrderedDict
-
+from shutil import copyfile, copytree
 
 def rename_sdk_old_dirs(path, dry_run = False):
     # I make assumption that all old sdk dirs have "sdk" names.
@@ -17,12 +17,22 @@ def rename_sdk_old_dirs(path, dry_run = False):
                 if not dry_run:
                     os.rename(full_path, new_full_path)
                     os.mkdir(full_path)
-            
+    
+def rename_dirs(sdk_dirs_in_mbed, new_name, dry_run=False):
+    
+    for dir_path in sdk_dirs_in_mbed:
+        xdir_path = os.path.join('.',dir_path)
+        new_dir_path = os.path.join(os.path.dirname(xdir_path), new_name)
+        print("rename " + xdir_path + " ---> " + new_dir_path)
+        if not dry_run:
+            os.rename(xdir_path, new_dir_path)
  
 def get_file_pathes_couples(path_sdk_componets, skip_dirs = [], skip_files = [], verbose = False):
     mbed_list = []
     cutted_roots = []
     cutted_files = []
+    
+    path_sdk_componets = path_sdk_componets + '\\'
     
     for root, dirs, files in os.walk(path_sdk_componets):
         procced = True
@@ -178,39 +188,70 @@ def upgrade_copying_list_by_files(copy_list, list_sdk, force_copy_files_list, ve
     if verbose:
         for item in print_list:
             str_verbose = "{0} --> {1}"
-            print(str_verbose.format(item["id"], item["dest_path"]))            
+            print(str_verbose.format(item["id"], item["dest_path"]))
+            
+def copy_one_file(src, dest, verbose=False):
+    dirs_to_created = os.path.dirname(dest)
+    
+    if not os.path.exists(dirs_to_created):
+        os.makedirs(dirs_to_created)
+        print('makerdirs: {0}'.format(dirs_to_created))
+        
+    shutil.copyfile(src, dest)
+    print('copy: {0} --> {1}'.format(src, dest))
+    
                         
 
-with open('update_desc.json') as data_file:    
-    update_desc = json.load(data_file)
 
-#print(update_desc)
-ignore_file_list = update_desc['ignore_file_list']
-ignore_dirs_list = update_desc['ignore_dirs_list']
-id_replacements  = update_desc['id_replacements']
-force_copy_files_list = update_desc['force_copy_files_list']
-force_copy_dirs_list = update_desc['force_copy_dirs_list']
- 
-#rename_sdk_old_dirs(os.getcwd(), False)
-list_sdk = get_file_pathes_couples("C:\\nRF5_SDK_12.1.0\\components\\",
-                                   ignore_dirs_list,
-                                   ignore_file_list,
-                                   verbose = True)
-                                   
-list_mbed1 = get_file_pathes_couples("_old_sdk\\")
-list_mbed2 = get_file_pathes_couples("TARGET_MCU_NRF52832\\_old_sdk\\")
-list_mbed3 = get_file_pathes_couples("TARGET_MCU_NRF51822_UNIFIED\\_old_sdk\\")
+if __name__ == '__main__':
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument('-n', '--dry_run', help='Dry run', action='store_true')
+    argument_parser.add_argument('-v', '--verbose', help='Verbose mode', action='store_true')
+    
+    parser_args = vars(argument_parser.parse_args())    
+    
+    verbose = False
+    
+    if parser_args['verbose'] or parser_args['dry_run']:
+        verbose = True
+                        
+    with open('update_desc.json') as data_file:    
+        update_desc = json.load(data_file)
 
-list_mbed = list_mbed1 + list_mbed2 + list_mbed3
-
-list_mbed = apply_replacement_id(list_mbed, id_replacements)
-
-mbed_port_path = ''#"C:\\mbed\\mbed-os\\targets\\TARGET_NORDIC\\TARGET_NRF5\\"
-
-copy_list = get_copying_automatic_list(list_mbed, list_sdk, mbed_port_path, verbose = True)
+    
         
-upgrade_copying_list_by_dirs(copy_list, list_sdk, force_copy_dirs_list, verbose = True)
-upgrade_copying_list_by_files(copy_list, list_sdk, force_copy_files_list, verbose = True)
-        
-get_mbed_sdk_dirs_lsit(path = ".")
+    ignore_file_list = update_desc['ignore_file_list']
+    ignore_dirs_list = update_desc['ignore_dirs_list']
+    id_replacements  = update_desc['id_replacements']
+    force_copy_files_list = update_desc['force_copy_files_list']
+    force_copy_dirs_list = update_desc['force_copy_dirs_list']
+    sdk_dirs_in_mbed  = update_desc['sdk_dirs_in_mbed']
+     
+    list_sdk = get_file_pathes_couples("C:\\nRF5_SDK_12.1.0\\components",
+                                       ignore_dirs_list,
+                                       ignore_file_list,
+                                       verbose)
+    list_mbed = []
+    for directory in sdk_dirs_in_mbed:
+        list_mbed.extend(get_file_pathes_couples(directory))
 
+    list_mbed = apply_replacement_id(list_mbed, id_replacements)
+
+    mbed_port_path = ''
+
+    copy_list = get_copying_automatic_list(list_mbed, list_sdk, mbed_port_path, verbose)
+            
+    upgrade_copying_list_by_dirs(copy_list, list_sdk, force_copy_dirs_list, verbose)
+    upgrade_copying_list_by_files(copy_list, list_sdk, force_copy_files_list, verbose)
+    
+    rename_dirs(sdk_dirs_in_mbed, '_old_sdk', parser_args['dry_run'])
+    
+    if not parser_args['dry_run']:    
+        for copy_item in copy_list:
+            src = os.path.join('.',copy_item["src_path"])
+            dest = os.path.join('.\\sandbox-sdk',copy_item["dest_path"])
+            
+            copy_one_file(src, dest, verbose)
+            
+    with open('sdk_update_result.json', 'w') as fp:
+        json.dump(copy_list, fp)

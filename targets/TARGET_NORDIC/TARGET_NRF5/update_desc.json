@@ -48,16 +48,16 @@
                         ],
                     
     "force_copy_files_list" : [{"sdk_file": "sdk_validation.h", "mbed_dir": "sdk"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_comp.h", "mbed_dir": "TARGET_MCU_NRF52832\\drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_egu.h", "mbed_dir": "TARGET_MCU_NRF52832\\drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_i2s.h", "mbed_dir": "TARGET_MCU_NRF52832\\drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_lpcomp.h", "mbed_dir": "drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_peripherals.h", "mbed_dir": "drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_qdec.h", "mbed_dir": "drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_rng.h", "mbed_dir": "drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_twim.h", "mbed_dir": "drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_twis.h", "mbed_dir": "TARGET_MCU_NRF52832\\drivers_nrf\\hal"},
-                         {"sdk_file": "drivers_nrf\\hal\\nrf_uarte.h", "mbed_dir": "drivers_nrf\\hal"}
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_comp.h", "mbed_dir": "TARGET_MCU_NRF52832\\sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_egu.h", "mbed_dir": "TARGET_MCU_NRF52832\\sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_i2s.h", "mbed_dir": "TARGET_MCU_NRF52832\\sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_lpcomp.h", "mbed_dir": "sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_peripherals.h", "mbed_dir": "sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_qdec.h", "mbed_dir": "sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_rng.h", "mbed_dir": "sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_twim.h", "mbed_dir": "sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_twis.h", "mbed_dir": "TARGET_MCU_NRF52832\\sdk\\drivers_nrf\\hal"},
+                         {"sdk_file": "drivers_nrf\\hal\\nrf_uarte.h", "mbed_dir": "sdk\\drivers_nrf\\hal"}
                         ],
                         
     "force_copy_dirs_list" : [{"sdk_dir": "device",                    "mbed_dir": "sdk\\device"},
@@ -79,5 +79,11 @@
                         {"sdk_dir": "libraries\\log",            "mbed_dir": "sdk\\libraries\\log"},
                         {"sdk_dir": "libraries\\bootloader",     "mbed_dir": "sdk\\libraries\\bootloader"},
                         {"sdk_dir": "libraries\\svc",            "mbed_dir": "sdk\\libraries\\svc"}
-                       ]
+                       ],
+                       
+    "sdk_dirs_in_mbed" : [
+                          "sdk",
+                          "TARGET_MCU_NRF52832\\sdk",
+                          "TARGET_MCU_NRF51822_UNIFIED\\sdk"
+                         ]
 }
