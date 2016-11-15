@@ -85,5 +85,7 @@
                           "sdk",
                           "TARGET_MCU_NRF52832\\sdk",
                           "TARGET_MCU_NRF51822_UNIFIED\\sdk"
-                         ]
+                         ],
+                         
+    "sdk_component_path": "C:\\nRF5_SDK_12.1.0\\components"
 }

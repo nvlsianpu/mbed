@@ -207,6 +207,7 @@ if __name__ == '__main__':
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument('-n', '--dry_run', help='Dry run', action='store_true')
     argument_parser.add_argument('-v', '--verbose', help='Verbose mode', action='store_true')
+    #argument_parser.add_argument('-r', '--rename_only', help='rename only', action='store_true')
     
     parser_args = vars(argument_parser.parse_args())    
     
@@ -219,15 +220,16 @@ if __name__ == '__main__':
         update_desc = json.load(data_file)
 
     
-        
+    #if not parser_args ['rename_only']:
     ignore_file_list = update_desc['ignore_file_list']
     ignore_dirs_list = update_desc['ignore_dirs_list']
     id_replacements  = update_desc['id_replacements']
     force_copy_files_list = update_desc['force_copy_files_list']
     force_copy_dirs_list = update_desc['force_copy_dirs_list']
     sdk_dirs_in_mbed  = update_desc['sdk_dirs_in_mbed']
+    sdk_component_path = update_desc['sdk_component_path']
      
-    list_sdk = get_file_pathes_couples("C:\\nRF5_SDK_12.1.0\\components",
+    list_sdk = get_file_pathes_couples(sdk_component_path,
                                        ignore_dirs_list,
                                        ignore_file_list,
                                        verbose)
@@ -249,7 +251,7 @@ if __name__ == '__main__':
     if not parser_args['dry_run']:    
         for copy_item in copy_list:
             src = os.path.join('.',copy_item["src_path"])
-            dest = os.path.join('.\\sandbox-sdk',copy_item["dest_path"])
+            dest = os.path.join('.',copy_item["dest_path"])
             
             copy_one_file(src, dest, verbose)
             
