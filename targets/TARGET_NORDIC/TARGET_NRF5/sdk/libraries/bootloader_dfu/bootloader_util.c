@@ -189,6 +189,7 @@ static inline void bootloader_util_reset(uint32_t start_addr)
 
 
 #include "nrf.h"
+#include "nrf_wdt.h"
 
 void bootloader_util_app_start(uint32_t start_addr)
 {
@@ -198,6 +199,14 @@ void bootloader_util_app_start(uint32_t start_addr)
 #endif    
     // disable all interrupts
     core_util_critical_section_enter();
+    
+#ifdef NRF5_BOOT_WDT_ENABLE
+    //Configure WDT.
+    nrf_wdt_behaviour_set(NRF_WDT_BEHAVIOUR_RUN_SLEEP_HALT);
+    nrf_wdt_reload_value_set((500 * 32768) / 1000); // 500 ms
+    nrf_wdt_reload_request_enable(NRF_WDT_RR0);
+    nrf_wdt_task_trigger(NRF_WDT_TASK_START);
+#endif NRF5_BOOT_WDT_ENABLE    
     
     bootloader_util_reset(start_addr);
 }
