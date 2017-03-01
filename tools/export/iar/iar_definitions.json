@@ -165,6 +165,9 @@
     "nRF52832_xxAA":{
         "OGChipSelectEditMenu": "nRF52832-xxAA\tNordicSemi nRF52832-xxAA"
     },
+    "nRF52840_xxAA":{
+        "OGChipSelectEditMenu": "nRF52840-xxAA\tNordicSemi nRF52840-xxAA"
+    },
     "NCS36510":{
         "OGChipSelectEditMenu": "NCS36510\tONSemiconductor NCS36510"
     },
