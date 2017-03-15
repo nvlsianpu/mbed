@@ -33,6 +33,9 @@
 #if DEVICE_STDIO_MESSAGES
 #include <stdio.h>
 #endif
+#if DEVICE_CRYPTOCELL
+#include "sns_silib.h"
+#endif
 #include <errno.h>
 #include "platform/retarget.h"
 
@@ -682,6 +685,21 @@ extern "C" WEAK void __cxa_pure_virtual(void) {
 
 #endif
 
+#if DEVICE_CRYPTOCELL
+
+#if defined(TOOLCHAIN_GCC)
+ CRYS_RND_Context_t   rndContext = {0};
+ CRYS_RND_WorkBuff_t  rndWorkBuff = {0};
+#else
+ CRYS_RND_Context_t   rndContext;
+ CRYS_RND_WorkBuff_t  rndWorkBuff;
+#endif
+
+CRYS_RND_Context_t*   rndContext_ptr;
+CRYS_RND_WorkBuff_t*  rndWorkBuff_ptr;
+
+#endif
+
 #if defined(TOOLCHAIN_GCC)
 
 #ifdef  FEATURE_UVISOR
@@ -704,6 +722,13 @@ extern "C" void software_init_hook(void)
         mbed_die();
     }
 #endif/* FEATURE_UVISOR */
+#if DEVICE_CRYPTOCELL
+    rndContext_ptr = &rndContext;
+    rndWorkBuff_ptr = &rndWorkBuff;
+    if (  SaSi_LibInit( &rndContext , &rndWorkBuff ) ) {
+        mbed_die();
+    }
+#endif
     mbed_sdk_init();
     software_init_hook_rtos();
 }
@@ -728,6 +753,13 @@ extern "C" int $Sub$$main(void) {
 }
 
 extern "C" void _platform_post_stackheap_init (void) {
+#if DEVICE_CRYPTOCELL
+    rndContext_ptr = &rndContext;
+    rndWorkBuff_ptr = &rndWorkBuff;
+    if (  SaSi_LibInit( &rndContext , &rndWorkBuff ) ) {
+        mbed_die();
+    }
+#endif
     mbed_sdk_init();
 }
 

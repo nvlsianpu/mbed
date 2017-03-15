@@ -43,6 +43,9 @@
 #include "PortNames.h"
 #include "PeripheralNames.h"
 #include "PinNames.h"
+#if DEVICE_CRYPTOCELL
+#include "objects_cryptocell.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
