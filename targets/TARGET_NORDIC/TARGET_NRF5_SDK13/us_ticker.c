@@ -533,6 +533,7 @@ static void register_next_tick()
     // This code is very short 20-38 cycles in the worst case, it shouldn't
     // disturb softdevice.
     core_util_critical_section_enter();
+
     uint32_t current_counter = nrf_rtc_counter_get(COMMON_RTC_INSTANCE);
 
     // If an overflow occur, set the next tick in COUNTER + delta clock cycles
@@ -544,6 +545,7 @@ static void register_next_tick()
     // Enable generation of the compare event for the value set above (this
     // event will trigger the interrupt).
     nrf_rtc_event_enable(COMMON_RTC_INSTANCE, OS_TICK_INT_MASK);
+
     core_util_critical_section_exit();
 }
 
