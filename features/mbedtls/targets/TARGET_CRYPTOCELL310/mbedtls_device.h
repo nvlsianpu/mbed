@@ -23,4 +23,6 @@
 
 #define MBEDTLS_ENTROPY_C
 
+#define MBEDTLS_AES_ALT
+
 #endif //__MBEDTLS_DEVICE__
