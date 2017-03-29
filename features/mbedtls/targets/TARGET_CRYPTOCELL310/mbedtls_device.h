@@ -23,6 +23,10 @@
 
 #define MBEDTLS_ENTROPY_C
 
+
 #define MBEDTLS_AES_ALT
+#define MBEDTLS_SHA1_ALT
+#define MBEDTLS_SHA256_ALT
+
 
 #endif //__MBEDTLS_DEVICE__
