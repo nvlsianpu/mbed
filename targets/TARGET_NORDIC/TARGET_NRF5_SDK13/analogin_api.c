@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef TARGET_MCU_NRF51822
  
 #include "mbed_assert.h"
 #include "analogin_api.h"
@@ -121,3 +123,5 @@ __STATIC_INLINE nrf_saadc_input_t nrf_drv_saadc_gpio_to_ain(uint32_t pin)
 }
 
 #endif // DEVICE_ANALOGIN
+
+#endif // !TARGET_MCU_NRF51822

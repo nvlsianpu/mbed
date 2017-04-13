@@ -48,6 +48,7 @@
 #include "nrf_drv_spi.h"
 #include "nrf_drv_spis.h"
 #include "app_util_platform.h"
+#include "sdk_config.h"
 
 #if DEVICE_SPI_ASYNCH
     #define SPI_IDX(obj)    ((obj)->spi.spi_idx)

@@ -35,7 +35,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
-
+ 
+#ifndef TARGET_MCU_NRF51822
+ 
 #include "mbed_assert.h"
 #include "mbed_error.h"
 #include "pwmout_api.h"
@@ -397,3 +399,5 @@ static void internal_pwmout_exe(pwmout_t *obj, bool new_period, bool initializat
 }
 
 #endif // DEVICE_PWMOUT
+
+#endif

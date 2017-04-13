@@ -92,6 +92,12 @@ void gpio_init(gpio_t *obj, PinName pin)
     m_gpio_cfg[obj->pin].used_as_gpio = true;
 }
 
+#ifdef TARGET_MCU_NRF51822
+__STATIC_INLINE uint32_t nrf_gpio_pin_out_read(uint32_t pin)
+{
+    return (NRF_GPIO->OUTSET & (1UL << (pin)));
+}
+#endif
 
 int gpio_read(gpio_t *obj)
 {

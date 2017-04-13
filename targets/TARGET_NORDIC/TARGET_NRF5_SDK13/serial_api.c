@@ -47,6 +47,7 @@
 #include "nrf_drv_common.h"
 #include "app_util_platform.h"
 #include "nrf_gpio.h"
+#include "sdk_config.h"
 
 #define UART_INSTANCE_COUNT 1
 #define UART_INSTANCE       NRF_UART0

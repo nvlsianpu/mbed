@@ -39,6 +39,10 @@
 #include "port_api.h"
 #include "pinmap.h"
 
+#ifdef TARGET_MCU_NRF51822
+    #define GPIO_REG_LIST  {NRF_GPIO}
+#endif
+
 static NRF_GPIO_Type * const m_ports[] = GPIO_REG_LIST;
 
 #if defined(TARGET_MCU_NRF51822)
@@ -56,7 +60,11 @@ static NRF_GPIO_Type * const m_ports[] = GPIO_REG_LIST;
 
 PinName port_pin(PortName port, int pin_n)
 {
+#ifdef TARGET_MCU_NRF51822
+    return (PinName)pin_n;
+#else    
     return (PinName)NRF_GPIO_PIN_MAP(port, pin_n);
+#endif
 }
 
 void port_init(port_t *obj, PortName port, int mask, PinDirection dir)
