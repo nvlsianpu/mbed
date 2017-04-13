@@ -590,7 +590,11 @@ ble_error_t nRF5xGap::setAddress(AddressType_t type, const Address_t address)
 ble_error_t nRF5xGap::getAddress(AddressType_t *typeP, Address_t address)
 {
     ble_gap_addr_t dev_addr;
+#if  (NRF_SD_BLE_API_VERSION <= 2)
+    if (sd_ble_gap_address_get(&dev_addr) != NRF_SUCCESS) {
+#else
     if (sd_ble_gap_addr_get(&dev_addr) != NRF_SUCCESS) {
+#endif
         return BLE_ERROR_PARAM_OUT_OF_RANGE;
     }
 
