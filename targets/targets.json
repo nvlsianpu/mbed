@@ -2522,7 +2522,7 @@
             "TARGET_MCU_NRF51822"
         ],
         "MERGE_BOOTLOADER": false,
-        "extra_labels": ["NORDIC", "MCU_NRF51", "MCU_NRF51822_UNIFIED", "NRF5"],
+        "extra_labels": ["NORDIC", "MCU_NRF51", "MCU_NRF51822_UNIFIED", "NRF5_SDK13", "SDK11"],
         "OUTPUT_EXT": "hex",
         "is_disk_virtual": true,
         "supported_toolchains": ["ARM", "GCC_ARM", "IAR"],
@@ -2697,7 +2697,7 @@
         "inherits": ["Target"],
         "core": "Cortex-M4F",
         "macros": ["TARGET_NRF52840", "BLE_STACK_SUPPORT_REQD", "SOFTDEVICE_PRESENT", "S140", "NRF_SD_BLE_API_VERSION=5", "NRF52840_XXAA", "NRF_DFU_SETTINGS_VERSION=1", "NRF_SD_BLE_API_VERSION=5"],
-        "extra_labels": ["NORDIC", "MCU_NRF52840", "NRF5_SDK13"],
+        "extra_labels": ["NORDIC", "MCU_NRF52840", "NRF5_SDK13", "SDK13"],
         "OUTPUT_EXT": "hex",
         "is_disk_virtual": true,
         "supported_toolchains": ["GCC_ARM", "ARM", "IAR"],
