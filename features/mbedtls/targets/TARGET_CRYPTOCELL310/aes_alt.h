@@ -27,23 +27,13 @@
 extern "C" {
 #endif
 
-
-struct sw_aes_context
-{
-    int nr;                     /*!<  number of rounds  */
-    uint32_t *rk;               /*!<  AES round keys    */
-    uint32_t buf[68];           /*!<  unaligned data    */
-    int sw_key_set;
-};
-
 typedef struct
 {
-    struct {
-        SaSiAesUserContext_t CC_Context;
-        SaSiAesEncryptMode_t CC_cipherFlag;
-        SaSiAesUserKeyData_t CC_KeyData;
-    } cc_aes_context;
-    struct sw_aes_context sw_context;
+
+    int keysize_nr;             /*number of rounds for SW use case, and key size for CC use case*/
+    uint32_t *rk;               /*!<  AES round keys for SW use case, and AES key for CC use case*/
+    uint32_t* buf;           /*!<  unaligned data  for sw use case  */
+    int is_sw;
 }
 mbedtls_aes_context;
 

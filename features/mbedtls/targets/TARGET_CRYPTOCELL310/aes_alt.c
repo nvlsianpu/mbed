@@ -20,6 +20,7 @@
 
 #include "mbedtls/aes.h"
 #if defined(MBEDTLS_AES_ALT)
+#include "mbedtls/platform.h"
 #include <string.h>
 #include "ssi_aes_defs.h"
 
@@ -345,6 +346,7 @@ static uint32_t RCON[10];
 
 
 
+#define RK_BUF_SIZE_IN_WORDS    68
 static int aes_init_done = 0;
 
 static void aes_gen_tables( void )
@@ -471,7 +473,7 @@ static void aes_gen_tables( void )
                  RT3[ ( Y0 >> 24 ) & 0xFF ];    \
 }
 
-void mbedtls_aes_encrypt( struct sw_aes_context *ctx,
+void mbedtls_aes_encrypt( mbedtls_aes_context *ctx,
                           const unsigned char input[16],
                           unsigned char output[16] )
 {
@@ -485,7 +487,7 @@ void mbedtls_aes_encrypt( struct sw_aes_context *ctx,
     GET_UINT32_LE( X2, input,  8 ); X2 ^= *RK++;
     GET_UINT32_LE( X3, input, 12 ); X3 ^= *RK++;
 
-    for( i = ( ctx->nr >> 1 ) - 1; i > 0; i-- )
+    for( i = ( ctx->keysize_nr >> 1 ) - 1; i > 0; i-- )
     {
         AES_FROUND( Y0, Y1, Y2, Y3, X0, X1, X2, X3 );
         AES_FROUND( X0, X1, X2, X3, Y0, Y1, Y2, Y3 );
@@ -523,7 +525,7 @@ void mbedtls_aes_encrypt( struct sw_aes_context *ctx,
     PUT_UINT32_LE( X3, output, 12 );
 }
 
-void mbedtls_aes_decrypt( struct sw_aes_context *ctx,
+void mbedtls_aes_decrypt( mbedtls_aes_context *ctx,
                           const unsigned char input[16],
                           unsigned char output[16] )
 {
@@ -537,7 +539,7 @@ void mbedtls_aes_decrypt( struct sw_aes_context *ctx,
     GET_UINT32_LE( X2, input,  8 ); X2 ^= *RK++;
     GET_UINT32_LE( X3, input, 12 ); X3 ^= *RK++;
 
-    for( i = ( ctx->nr >> 1 ) - 1; i > 0; i-- )
+    for( i = ( ctx->keysize_nr >> 1 ) - 1; i > 0; i-- )
     {
         AES_RROUND( Y0, Y1, Y2, Y3, X0, X1, X2, X3 );
         AES_RROUND( X0, X1, X2, X3, Y0, Y1, Y2, Y3 );
@@ -575,14 +577,65 @@ void mbedtls_aes_decrypt( struct sw_aes_context *ctx,
     PUT_UINT32_LE( X3, output, 12 );
 }
 
+static int CC_aes_cipher( mbedtls_aes_context *ctx,
+                          int mode,
+                          SaSiAesOperationMode_t aes_mode,
+                          size_t length,
+                          unsigned char* iv,
+                          size_t iv_len,
+                          const unsigned char *input,
+                          unsigned char *output )
+{
+    int ret = 0;
+    SaSiAesUserContext_t CC_Context = {0};
+    SaSiAesEncryptMode_t CC_cipherFlag = ( mode==MBEDTLS_AES_ENCRYPT ) ? SASI_AES_ENCRYPT : SASI_AES_DECRYPT;
+    SaSiAesUserKeyData_t CC_KeyData = {0};
+    CC_KeyData.pKey =  ctx->buf;
+    CC_KeyData.keySize = ctx->keysize_nr ;
+
+    ret = SaSi_AesInit ( &CC_Context , CC_cipherFlag , aes_mode , SASI_AES_PADDING_NONE );
+    if ( ret != 0 )
+        return -1;
+
+    ret = SaSi_AesSetKey ( &CC_Context , SASI_AES_USER_KEY , &CC_KeyData , sizeof(CC_KeyData) );
+    if ( ret != 0 )
+        return -1;
+
+    if ( iv )
+    {
+        ret = SaSi_AesSetIv ( &CC_Context , iv );
+        if ( ret != 0 )
+            return -1;
+     }
+
+     ret = SaSi_AesFinish ( &CC_Context , length ,  ( unsigned char* ) input , length , output , &length );
+     if ( ret != 0 )
+         return -1;
+
+     if ( aes_mode == SASI_AES_MODE_CBC && iv )
+     {
+          ret = SaSi_AesGetIv ( &CC_Context , iv );
+          if ( ret != 0 )
+              return -1;
+      }
+
+      ret = SaSi_AesFree ( &CC_Context );
+      if ( ret != 0 )
+          return -1;
+
+      return 0;
+}
+
 /*
  * AES-ECB block encryption/decryption
  */
-static int mbedtls_aes_crypt_sw_ecb( struct sw_aes_context *ctx,
+int mbedtls_aes_crypt_ecb( mbedtls_aes_context *ctx,
                     int mode,
                     const unsigned char input[16],
                     unsigned char output[16] )
 {
+    if ( !ctx->is_sw )
+        return CC_aes_cipher(ctx, mode, SASI_AES_MODE_ECB, 16, NULL, 0, input, output );
 
     if( mode == MBEDTLS_AES_ENCRYPT )
         mbedtls_aes_encrypt( ctx, input, output );
@@ -679,16 +732,24 @@ void mbedtls_aes_init( mbedtls_aes_context *ctx )
     memset ( ctx, 0, sizeof( mbedtls_aes_context ) );
 }
 
+
+
 void mbedtls_aes_free( mbedtls_aes_context *ctx )
 {
     if( ctx == NULL )
         return;
 
+    if ( NULL != ctx->buf )
+    {
+        mbedtls_free( ctx->buf );
+        ctx->buf = NULL;
+    }
+
     memset ( ctx, 0, sizeof( mbedtls_aes_context ) );
 }
 
 //taken from the aes.c function mbedtls_aes_setkey_enc
-int mbedtls_aes_setkey_sw_enc( struct sw_aes_context *ctx, const unsigned char *key,
+int mbedtls_aes_setkey_sw_enc( mbedtls_aes_context *ctx, const unsigned char *key,
                     unsigned int keybits )
 {
     if (ctx == NULL )
@@ -707,10 +768,19 @@ int mbedtls_aes_setkey_sw_enc( struct sw_aes_context *ctx, const unsigned char *
 
     switch( keybits )
     {
-        case 128: ctx->nr = 10; break;
-        case 192: ctx->nr = 12; break;
-        case 256: ctx->nr = 14; break;
+        case 128: ctx->keysize_nr = 10; break;
+        case 192: ctx->keysize_nr = 12; break;
+        case 256: ctx->keysize_nr = 14; break;
         default : return( MBEDTLS_ERR_AES_INVALID_KEY_LENGTH );
+    }
+
+    if ( NULL == ctx->buf )
+    {
+        ctx->buf = mbedtls_calloc( sizeof(uint32_t) , RK_BUF_SIZE_IN_WORDS );
+        if( NULL == ctx->buf )
+        {
+            return -1;
+        }
     }
 
     ctx->rk = RK = ctx->buf;
@@ -720,7 +790,7 @@ int mbedtls_aes_setkey_sw_enc( struct sw_aes_context *ctx, const unsigned char *
         GET_UINT32_LE( RK[i], key, i << 2 );
     }
 
-    switch( ctx->nr )
+    switch( ctx->keysize_nr )
     {
         case 10:
 
@@ -782,22 +852,32 @@ int mbedtls_aes_setkey_sw_enc( struct sw_aes_context *ctx, const unsigned char *
             }
             break;
     }
-    ctx->sw_key_set = 1;
+    ctx->is_sw = 1;
 
     return( 0 );
 
 }
 
 //taken from the aes.c function mbedtls_aes_setkey_dec
-int mbedtls_aes_setkey_sw_dec( struct sw_aes_context *ctx, const unsigned char *key,
+int mbedtls_aes_setkey_sw_dec( mbedtls_aes_context *ctx, const unsigned char *key,
                     unsigned int keybits )
 {
     int i, j, ret;
-    struct sw_aes_context cty;
+    mbedtls_aes_context cty;
     uint32_t *RK;
     uint32_t *SK;
 
-    memset ( &cty, 0, sizeof( struct sw_aes_context ) );
+    mbedtls_aes_init ( &cty );
+    if ( NULL == ctx->buf )
+    {
+        ctx->buf = mbedtls_calloc( sizeof(uint32_t), RK_BUF_SIZE_IN_WORDS );
+        if( NULL == ctx->buf )
+        {
+            mbedtls_printf( "Buffer allocation failed\n" );
+            ret = -1;
+            goto exit;
+        }
+    }
 
     ctx->rk = RK = ctx->buf;
 
@@ -805,17 +885,17 @@ int mbedtls_aes_setkey_sw_dec( struct sw_aes_context *ctx, const unsigned char *
     if( ( ret = mbedtls_aes_setkey_sw_enc( &cty, key, keybits ) ) != 0 )
         goto exit;
 
-    ctx->nr = cty.nr;
+    ctx->keysize_nr = cty.keysize_nr;
 
 
-    SK = cty.rk + cty.nr * 4;
+    SK = cty.rk + cty.keysize_nr * 4;
 
     *RK++ = *SK++;
     *RK++ = *SK++;
     *RK++ = *SK++;
     *RK++ = *SK++;
 
-    for( i = ctx->nr - 1, SK -= 8; i > 0; i--, SK -= 8 )
+    for( i = ctx->keysize_nr - 1, SK -= 8; i > 0; i--, SK -= 8 )
     {
         for( j = 0; j < 4; j++, SK++ )
         {
@@ -830,10 +910,10 @@ int mbedtls_aes_setkey_sw_dec( struct sw_aes_context *ctx, const unsigned char *
     *RK++ = *SK++;
     *RK++ = *SK++;
     *RK++ = *SK++;
-    ctx->sw_key_set = 1;
+    ctx->is_sw = 1;
 
 exit:
-    memset ( &cty, 0, sizeof( struct sw_aes_context ) );
+    mbedtls_aes_free ( &cty );
     return( ret );
 }
 
@@ -843,13 +923,24 @@ int mbedtls_aes_setkey_enc( mbedtls_aes_context *ctx, const unsigned char *key,
     if (ctx == NULL )
         return -1;
 
-    if (keybits/8 > SASI_AES_KEY_MAX_SIZE_IN_BYTES)
-        return mbedtls_aes_setkey_sw_enc(&ctx->sw_context,key,keybits);
+    if ( ctx->buf != NULL )
+        {
+            mbedtls_free( ctx->buf );
+            ctx->buf = NULL;
+        }
 
-    ctx->cc_aes_context.CC_cipherFlag = SASI_AES_ENCRYPT;
-    ctx->cc_aes_context.CC_KeyData.pKey = ( unsigned char* ) key;
-    ctx->cc_aes_context.CC_KeyData.keySize = keybits / 8;
-    ctx->sw_context.sw_key_set = 0;
+    if (keybits/8 > SASI_AES_KEY_MAX_SIZE_IN_BYTES)
+        return mbedtls_aes_setkey_sw_enc(ctx,key,keybits);
+
+    ctx->buf = mbedtls_calloc ( sizeof(uint32_t),  keybits / (8 * sizeof(uint32_t) ) );
+    if ( ctx->buf == NULL )
+    {
+        return -1;
+    }
+    memcpy( ctx->buf,key, keybits / 8 );
+
+    ctx->keysize_nr = keybits / 8;
+    ctx->is_sw = 0;
     return 0;
 
 }
@@ -860,77 +951,25 @@ int mbedtls_aes_setkey_dec( mbedtls_aes_context *ctx, const unsigned char *key,
     if (ctx == NULL )
         return -1;
 
-    if (keybits/8 > SASI_AES_KEY_MAX_SIZE_IN_BYTES)
-        return mbedtls_aes_setkey_sw_dec(&ctx->sw_context,key,keybits);
-
-    ctx->cc_aes_context.CC_cipherFlag = SASI_AES_DECRYPT;
-    ctx->cc_aes_context.CC_KeyData.pKey = ( unsigned char* ) key;
-    ctx->cc_aes_context.CC_KeyData.keySize = keybits / 8;
-    ctx->sw_context.sw_key_set = 0;
-    return 0;
-
-}
-
-static int CC_aes_cipher( mbedtls_aes_context *ctx,
-                          int mode,
-                          SaSiAesOperationMode_t aes_mode,
-                          size_t length,
-                          unsigned char* iv,
-                          size_t iv_len,
-                          const unsigned char *input,
-                          unsigned char *output )
-{
-    int ret = 0;
-
-    ret = SaSi_AesInit ( &ctx->cc_aes_context.CC_Context , ctx->cc_aes_context.CC_cipherFlag , aes_mode , SASI_AES_PADDING_NONE );
-    if ( ret != 0 )
-        return -1;
-
-    ret = SaSi_AesSetKey ( &ctx->cc_aes_context.CC_Context , SASI_AES_USER_KEY , &ctx->cc_aes_context.CC_KeyData , sizeof(ctx->cc_aes_context.CC_KeyData) );
-    if ( ret != 0 )
-        return -1;
-
-    if ( iv )
+    if ( ctx->buf != NULL )
     {
-        ret = SaSi_AesSetIv ( &ctx->cc_aes_context.CC_Context , iv );
-        if ( ret != 0 )
-            return -1;
-     }
+        mbedtls_free( ctx->buf );
+        ctx->buf = NULL;
+    }
 
-     ret = SaSi_AesFinish ( &ctx->cc_aes_context.CC_Context , length ,  ( unsigned char* ) input , length , output , &length );
-     if ( ret != 0 )
-         return -1;
+    if (keybits/8 > SASI_AES_KEY_MAX_SIZE_IN_BYTES)
+        return mbedtls_aes_setkey_sw_dec(ctx,key,keybits);
 
-     if ( aes_mode == SASI_AES_MODE_CBC && iv )
-     {
-          ret = SaSi_AesGetIv ( &ctx->cc_aes_context.CC_Context , iv );
-          if ( ret != 0 )
-              return -1;
-      }
+    ctx->buf = mbedtls_calloc ( sizeof(uint32_t), keybits / (8 * sizeof(uint32_t) ));
+    if ( ctx->buf == NULL )
+    {
+        return -1;
+    }
+    memcpy( ctx->buf,key, keybits / 8 );
 
-      ret = SaSi_AesFree ( &ctx->cc_aes_context.CC_Context );
-      if ( ret != 0 )
-          return -1;
-
-      return 0;
-}
-
-int mbedtls_aes_crypt_ecb( mbedtls_aes_context *ctx,
-                    int mode,
-                    const unsigned char input[16],
-                    unsigned char output[16] )
-{
-    if ( ctx == NULL )
-           return -1;
-    //if not supported by HW, fallback to sw implementation;
-    if ( ctx->sw_context.sw_key_set )
-        return mbedtls_aes_crypt_sw_ecb( &ctx->sw_context,mode,input, output );
-
-    if ( ( mode != MBEDTLS_AES_ENCRYPT  || ctx->cc_aes_context.CC_cipherFlag !=  SASI_AES_ENCRYPT ) &&
-         ( mode != MBEDTLS_AES_DECRYPT || ctx->cc_aes_context.CC_cipherFlag !=  SASI_AES_DECRYPT ) )
-          return -1;
-
-    return CC_aes_cipher(ctx, mode, SASI_AES_MODE_ECB, 16, NULL, 0, input, output );
+    ctx->keysize_nr = keybits / 8;
+    ctx->is_sw = 0;
+    return 0;
 
 }
 
@@ -938,7 +977,7 @@ int mbedtls_aes_crypt_ecb( mbedtls_aes_context *ctx,
 /*
  * AES-CBC buffer encryption/decryption
  */
-static int mbedtls_aes_crypt_sw_cbc( struct sw_aes_context *ctx,
+int mbedtls_aes_crypt_cbc( mbedtls_aes_context *ctx,
                     int mode,
                     size_t length,
                     unsigned char iv[16],
@@ -947,6 +986,8 @@ static int mbedtls_aes_crypt_sw_cbc( struct sw_aes_context *ctx,
 {
     int i;
     unsigned char temp[16];
+    if ( !ctx->is_sw )
+        return CC_aes_cipher( ctx, mode, SASI_AES_MODE_CBC, length, iv, 16, input, output );
 
     if( length % 16 )
         return( MBEDTLS_ERR_AES_INVALID_INPUT_LENGTH );
@@ -956,7 +997,7 @@ static int mbedtls_aes_crypt_sw_cbc( struct sw_aes_context *ctx,
         while( length > 0 )
         {
             memcpy( temp, input, 16 );
-            mbedtls_aes_crypt_sw_ecb( ctx, mode, input, output );
+            mbedtls_aes_crypt_ecb( ctx, mode, input, output );
 
             for( i = 0; i < 16; i++ )
                 output[i] = (unsigned char)( output[i] ^ iv[i] );
@@ -975,7 +1016,7 @@ static int mbedtls_aes_crypt_sw_cbc( struct sw_aes_context *ctx,
             for( i = 0; i < 16; i++ )
                 output[i] = (unsigned char)( input[i] ^ iv[i] );
 
-            mbedtls_aes_crypt_sw_ecb( ctx, mode, output, output );
+            mbedtls_aes_crypt_ecb( ctx, mode, output, output );
             memcpy( iv, output, 16 );
 
             input  += 16;
@@ -987,34 +1028,13 @@ static int mbedtls_aes_crypt_sw_cbc( struct sw_aes_context *ctx,
     return( 0 );
 }
 
-int mbedtls_aes_crypt_cbc( mbedtls_aes_context *ctx,
-                           int mode,
-                           size_t length,
-                           unsigned char iv[16],
-                           const unsigned char *input,
-                           unsigned char *output )
-{
-    if ( ctx == NULL )
-           return -1;
-
-    //if not supported by HW, fallback to sw implementation;
-    if ( ctx->sw_context.sw_key_set )
-        return mbedtls_aes_crypt_sw_cbc( &ctx->sw_context,mode,length,iv,input, output );
-
-    if ( ( mode != MBEDTLS_AES_ENCRYPT  || ctx->cc_aes_context.CC_cipherFlag !=  SASI_AES_ENCRYPT ) &&
-         ( mode != MBEDTLS_AES_DECRYPT || ctx->cc_aes_context.CC_cipherFlag !=  SASI_AES_DECRYPT ) )
-        return -1;
-
-    return CC_aes_cipher( ctx, mode, SASI_AES_MODE_CBC, length, iv, 16, input, output );
-}
-
 #endif /* MBEDTLS_CIPHER_MODE_CBC */
 
 #if defined(MBEDTLS_CIPHER_MODE_CTR)
 /*
  * AES-CTR buffer encryption/decryption
  */
-static int mbedtls_aes_crypt_sw_ctr( struct sw_aes_context *ctx,
+int mbedtls_aes_crypt_ctr( mbedtls_aes_context *ctx,
                        size_t length,
                        size_t *nc_off,
                        unsigned char nonce_counter[16],
@@ -1024,11 +1044,13 @@ static int mbedtls_aes_crypt_sw_ctr( struct sw_aes_context *ctx,
 {
     int c, i;
     size_t n = *nc_off;
+    if ( !ctx->is_sw )
+        return  CC_aes_cipher(ctx, MBEDTLS_AES_ENCRYPT, SASI_AES_MODE_CTR, length, nonce_counter, 16, input, output );
 
     while( length-- )
     {
         if( n == 0 ) {
-            mbedtls_aes_crypt_sw_ecb( ctx, MBEDTLS_AES_ENCRYPT, nonce_counter, stream_block );
+            mbedtls_aes_crypt_ecb( ctx, MBEDTLS_AES_ENCRYPT, nonce_counter, stream_block );
 
             for( i = 16; i > 0; i-- )
                 if( ++nonce_counter[i - 1] != 0 )
@@ -1045,23 +1067,6 @@ static int mbedtls_aes_crypt_sw_ctr( struct sw_aes_context *ctx,
     return( 0 );
 }
 
-int mbedtls_aes_crypt_ctr( mbedtls_aes_context *ctx,
-                           size_t length,
-                           size_t *nc_off,
-                           unsigned char nonce_counter[16],
-                           unsigned char stream_block[16],
-                           const unsigned char *input,
-                           unsigned char *output )
-{
-    if ( ctx == NULL )
-        return -1;
-
-    //if not supported by HW, fallback to sw implementation;
-    if ( ctx->sw_context.sw_key_set )
-        return mbedtls_aes_crypt_sw_ctr( &ctx->sw_context,length,nc_off,nonce_counter,stream_block,input, output );
-
-    return CC_aes_cipher(ctx, MBEDTLS_AES_ENCRYPT, SASI_AES_MODE_CTR, length, nonce_counter, 16, input, output );
-}
 #endif /* MBEDTLS_CIPHER_MODE_CTR */
 #endif/* MBEDTLS_AES_ALT */
 
