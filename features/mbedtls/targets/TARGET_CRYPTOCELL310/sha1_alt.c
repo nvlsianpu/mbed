@@ -37,31 +37,31 @@ void mbedtls_sha1_free( mbedtls_sha1_context *ctx )
 }
 
 void mbedtls_sha1_clone( mbedtls_sha1_context *dst,
-                           const mbedtls_sha1_context *src )
+                         const mbedtls_sha1_context *src )
 {
-    memcpy(dst,src,sizeof(mbedtls_sha1_context));
+    memcpy( dst, src, sizeof(mbedtls_sha1_context) );
 }
 
 void mbedtls_sha1_starts( mbedtls_sha1_context *ctx )
 {
-    CRYS_HASH_Init(&ctx->crys_hash_ctx, CRYS_HASH_SHA1_mode );
+    CRYS_HASH_Init( &ctx->crys_hash_ctx, CRYS_HASH_SHA1_mode );
 }
 
 
 void mbedtls_sha1_update( mbedtls_sha1_context *ctx, const unsigned char *input, size_t ilen )
 {
-    CRYS_HASH_Update(&ctx->crys_hash_ctx, (uint8_t*)input,ilen);
+    CRYS_HASH_Update( &ctx->crys_hash_ctx, (uint8_t*)input, ilen );
 }
 
 void mbedtls_sha1_finish( mbedtls_sha1_context *ctx, unsigned char output[20] )
 {
     CRYS_HASH_Result_t crys_result = {0};
-    CRYS_HASH_Finish(&ctx->crys_hash_ctx,crys_result);
-    memcpy(output,crys_result,20);
+    CRYS_HASH_Finish( &ctx->crys_hash_ctx, crys_result );
+    memcpy( output, crys_result, 20 );
 }
 
 void mbedtls_sha1_process( mbedtls_sha1_context *ctx, const unsigned char data[64] )
 {
-    CRYS_HASH_Update(&ctx->crys_hash_ctx, (uint8_t*)data,64);
+    CRYS_HASH_Update( &ctx->crys_hash_ctx, (uint8_t*)data, 64 );
 }
 #endif //MBEDTLS_SHA1_ALT
