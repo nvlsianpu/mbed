@@ -449,10 +449,9 @@ ble_error_t btle_getAddressesFromBondTable(Gap::Whitelist_t &addrList)
     /**
      * Fill addresses list:
      * Copy addresses from bond table, or
-     * for every private resolvable address in the bond table check if
-     * there is maching address in th provided whitelist and copy resolvable address.
+     * for every private resolvable address in the bond table generate the resolvable address.
      */
-    while (peer_id != PM_PEER_ID_INVALID) {
+    while ((peer_id != PM_PEER_ID_INVALID) && (addrList.capacity > addrList.size)) {
         memset(&bond_data, 0x00, sizeof(bond_data));
 
         // Read peer data from flash.
@@ -463,18 +462,13 @@ ble_error_t btle_getAddressesFromBondTable(Gap::Whitelist_t &addrList)
             return BLE_ERROR_UNSPECIFIED;
         }
 
-        if (addrList.capacity <= addrList.size) {
-            /* Ran out of space in the output Gap::Whitelist_t */
-            return BLE_ERROR_NONE;
-        }
-
         if (bond_data.peer_ble_id.id_addr_info.addr_type == BLEProtocol::AddressType::RANDOM_PRIVATE_RESOLVABLE) {
             btle_generateResolvableAddress(bond_data.peer_ble_id.id_info,
                 (ble_gap_addr_t &) addrList.addresses[addrList.size].address);
         } else {
-            memcpy( &addrList.addresses[addrList.size].address,
-            		&bond_data.peer_ble_id.id_addr_info.addr,
-					sizeof(addrList.addresses[0].address));
+            memcpy(&addrList.addresses[addrList.size].address,
+                   &bond_data.peer_ble_id.id_addr_info.addr,
+                   sizeof(addrList.addresses[0].address));
         }
 
         addrList.addresses[addrList.size].type = static_cast<BLEProtocol::AddressType_t> (bond_data.peer_ble_id.id_addr_info.addr_type);

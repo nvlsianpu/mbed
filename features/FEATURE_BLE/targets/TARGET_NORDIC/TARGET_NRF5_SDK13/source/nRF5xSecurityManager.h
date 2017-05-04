@@ -122,8 +122,8 @@ public:
      *                  be stored.
      *                  (on output) A copy of the addresses from bonded peers.
      *
-     * @return
-     *           BLE_ERROR_NONE if successful.
+     * @retval BLE_ERROR_NONE         if successful.
+     * @retval BLE_ERROR_UNSPECIFIED  Bond data could not be found in flash or is inconsistent.
      */
     virtual ble_error_t getAddressesFromBondTable(Gap::Whitelist_t &addresses) const {
         return btle_getAddressesFromBondTable(addresses);

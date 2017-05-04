@@ -137,8 +137,8 @@ void btle_generateResolvableAddress(const ble_gap_irk_t &irk, ble_gap_addr_t &ad
      *                  be stored.
      *                  (on output) A copy of the addresses from bonded peers.
      *
-     * @return
-     *           BLE_ERROR_NONE if successful.
+     * @retval BLE_ERROR_NONE         if successful.
+     * @retval BLE_ERROR_UNSPECIFIED  Bond data could not be found in flash or is inconsistent.
      */
     ble_error_t btle_getAddressesFromBondTable(Gap::Whitelist_t &addrList);
 #endif
