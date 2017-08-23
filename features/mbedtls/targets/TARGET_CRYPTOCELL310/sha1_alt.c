@@ -39,7 +39,7 @@ void mbedtls_sha1_free( mbedtls_sha1_context *ctx )
 void mbedtls_sha1_clone( mbedtls_sha1_context *dst,
                          const mbedtls_sha1_context *src )
 {
-    memcpy( dst, src, sizeof(mbedtls_sha1_context) );
+    memcpy( dst, src, sizeof( mbedtls_sha1_context ) );
 }
 
 void mbedtls_sha1_starts( mbedtls_sha1_context *ctx )
@@ -48,7 +48,9 @@ void mbedtls_sha1_starts( mbedtls_sha1_context *ctx )
 }
 
 
-void mbedtls_sha1_update( mbedtls_sha1_context *ctx, const unsigned char *input, size_t ilen )
+void mbedtls_sha1_update( mbedtls_sha1_context *ctx,
+                          const unsigned char *input,
+                          size_t ilen )
 {
     CRYS_HASH_Update( &ctx->crys_hash_ctx, (uint8_t*)input, ilen );
 }

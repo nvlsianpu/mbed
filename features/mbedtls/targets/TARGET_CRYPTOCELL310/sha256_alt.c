@@ -39,13 +39,14 @@ void mbedtls_sha256_free( mbedtls_sha256_context *ctx )
 void mbedtls_sha256_clone( mbedtls_sha256_context *dst,
                            const mbedtls_sha256_context *src )
 {
-    memcpy( dst, src, sizeof(mbedtls_sha256_context) );
+    memcpy( dst, src, sizeof( mbedtls_sha256_context ) );
 }
 
 
 void mbedtls_sha256_starts( mbedtls_sha256_context *ctx, int is224 )
 {
-    CRYS_HASH_Init( &ctx->crys_hash_ctx, is224 ? CRYS_HASH_SHA224_mode : CRYS_HASH_SHA256_mode );
+    CRYS_HASH_Init( &ctx->crys_hash_ctx, is224 ?
+                    CRYS_HASH_SHA224_mode : CRYS_HASH_SHA256_mode );
 }
 
 void mbedtls_sha256_process( mbedtls_sha256_context *ctx, const unsigned char data[64] )
@@ -53,7 +54,9 @@ void mbedtls_sha256_process( mbedtls_sha256_context *ctx, const unsigned char da
     CRYS_HASH_Update( &ctx->crys_hash_ctx, (uint8_t*)data, 64 );
 }
 
-void mbedtls_sha256_update( mbedtls_sha256_context *ctx, const unsigned char *input, size_t ilen )
+void mbedtls_sha256_update( mbedtls_sha256_context *ctx,
+                            const unsigned char *input,
+                            size_t ilen )
 {
     CRYS_HASH_Update( &ctx->crys_hash_ctx, (uint8_t*)input, ilen );
 }
